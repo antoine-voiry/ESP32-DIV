@@ -7,3 +7,22 @@
 *.elf
 *.map
 *.backup
+
+# Claude Code / IDE local configs
+CLAUDE.md
+platform.ini
+.claude/
+.vscode/
+.idea/
+
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+.pioenvs.ini
+dist/
+build/
+
+# IDE temp files
+*.code-workspace
+*.sublime-workspace
