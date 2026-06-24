@@ -8,12 +8,14 @@
 *.map
 *.backup
 
-# Claude Code / IDE local configs
-CLAUDE.md
-platform.ini
+# Claude Code / IDE local configs (CLAUDE.md is repo-tracked; .claude/* is local-only)
 .claude/
+.claude/settings.json
+.claude/settings.local.json
 .vscode/
 .idea/
+platform.ini
+platformio.ini
 
 # PlatformIO
 .pio/
