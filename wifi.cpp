@@ -84,9 +84,7 @@ void do_sampling_FFT() {
   for (int i = 0; i < samples; i++) {
     vReal[i] = tmpPacketCounter * 300;
     vImag[i] = 1;
-    while (micros() - microseconds < sampling_period_us) {
-
-    }
+    delayMicroseconds(sampling_period_us);
     microseconds += sampling_period_us;
   }
 
