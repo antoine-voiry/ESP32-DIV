@@ -30,9 +30,6 @@ void cleanupNRF24() {
     // Release GPIO 5 (CSN_PIN_3) - set to INPUT so SD can take it
     pinMode(5, INPUT);
 
-    // Also release radio3's CE pin (GPIO 4) to be safe
-    pinMode(4, INPUT);
-
     // Deselect radio1 and radio2 CSN pins to prevent SPI conflicts
     pinMode(17, OUTPUT);
     digitalWrite(17, HIGH);  // CSN_PIN_1 HIGH = deselected
