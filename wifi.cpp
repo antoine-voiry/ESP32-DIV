@@ -979,6 +979,7 @@ uint8_t macList[MAX_NETWORKS][6];
 TaskHandle_t wifiScanTaskHandle = NULL;
 TaskHandle_t uiTaskHandle = NULL;
 TaskHandle_t statusBarTaskHandle = NULL;
+volatile bool deauthTasksStop = false;
 
 SemaphoreHandle_t tftSemaphore;
 
@@ -1274,18 +1275,22 @@ void runUI() {
 
 void uiTask(void *param) {
   while (1) {
-    xSemaphoreTake(tftSemaphore, portMAX_DELAY);
-    runUI();
-    xSemaphoreGive(tftSemaphore);
+    if (deauthTasksStop) { vTaskDelete(NULL); return; }
+    if (xSemaphoreTake(tftSemaphore, pdMS_TO_TICKS(100)) == pdTRUE) {
+      runUI();
+      xSemaphoreGive(tftSemaphore);
+    }
     vTaskDelay(50 / portTICK_PERIOD_MS);
   }
 }
 
 void statusBarTask(void *param) {
   while (1) {
-    xSemaphoreTake(tftSemaphore, portMAX_DELAY);
-    updateStatusBar();
-    xSemaphoreGive(tftSemaphore);
+    if (deauthTasksStop) { vTaskDelete(NULL); return; }
+    if (xSemaphoreTake(tftSemaphore, pdMS_TO_TICKS(100)) == pdTRUE) {
+      updateStatusBar();
+      xSemaphoreGive(tftSemaphore);
+    }
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
@@ -1311,7 +1316,7 @@ void deauthdetectSetup() {
 
   tftSemaphore = xSemaphoreCreateMutex();
 
-  xTaskCreate(scanWiFiTask, "WiFiScanTask", 4096, NULL, 1, &wifiScanTaskHandle);
+  xTaskCreate(scanWiFiTask, "WiFiScanTask", 8192, NULL, 1, &wifiScanTaskHandle);
   xTaskCreate(uiTask, "UITask", 4096, NULL, 2, &uiTaskHandle);
   xTaskCreate(statusBarTask, "StatusBarTask", 2048, NULL, 1, &statusBarTaskHandle);
 
@@ -1322,9 +1327,12 @@ void deauthdetectLoop() {
   checkButtonPress();
 
   if (stopScan || exitMode) {
+    deauthTasksStop = true;
+    vTaskDelay(pdMS_TO_TICKS(300));  // allow tasks to see flag and self-delete
     if (wifiScanTaskHandle != NULL) { vTaskDelete(wifiScanTaskHandle); wifiScanTaskHandle = NULL; }
     if (uiTaskHandle != NULL) { vTaskDelete(uiTaskHandle); uiTaskHandle = NULL; }
     if (statusBarTaskHandle != NULL) { vTaskDelete(statusBarTaskHandle); statusBarTaskHandle = NULL; }
+    deauthTasksStop = false;
     esp_wifi_set_promiscuous(false);
     WiFi.disconnect();
     stopScan = false;
