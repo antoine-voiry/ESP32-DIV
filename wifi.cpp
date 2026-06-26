@@ -929,7 +929,7 @@ void beaconSpamLoop() {
         output();
       }
   
-      if (pcf.digitalRead(BTN_UP)) {
+      if (!pcf.digitalRead(BTN_UP)) {   // LOW = pressed = user wants to stop
         delay(50);
         break;
       }
