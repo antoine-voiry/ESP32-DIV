@@ -1762,12 +1762,13 @@ const byte DNS_PORT = 53;
 WebServer server(80);
 bool attackActive = true;
 
-#define EEPROM_SIZE 1440
+#include "eeprom_layout.h"
+#define EEPROM_SIZE   EEPROM_TOTAL_SIZE
 #define SSID_ADDR 0
-#define CRED_ADDR 32
-#define COUNT_ADDR 1248
-#define MAX_CREDS 20
-#define CRED_SIZE 64 // 16 (user) + 16 (pass) + 32 (SSID)
+#define CRED_ADDR     CP_CRED_ADDR
+#define COUNT_ADDR    CP_COUNT_ADDR
+#define MAX_CREDS     CP_MAX_CREDS
+#define CRED_SIZE     CP_CRED_SIZE  // 16 (user) + 16 (pass) + 32 (SSID)
 
 String terminalBuffer[MAX_LINES];
 uint16_t colorBuffer[MAX_LINES];

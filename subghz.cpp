@@ -21,11 +21,12 @@ void IRAM_ATTR gdo0DebugISR() {
     gdo0_interrupt_count++;
 }
 
-#define EEPROM_SIZE 1440
-#define ADDR_VALUE 1280    // 4 bytes
-#define ADDR_BITLEN 1284   // 2 bytes
-#define ADDR_PROTO 1286    // 2 bytes
-#define ADDR_FREQ 1288     // 4 bytes 
+#include "eeprom_layout.h"
+#define EEPROM_SIZE         EEPROM_TOTAL_SIZE
+#define ADDR_VALUE          SUBGHZ_ADDR_VALUE
+#define ADDR_BITLEN         SUBGHZ_ADDR_BITLEN
+#define ADDR_PROTO          SUBGHZ_ADDR_PROTO
+#define ADDR_FREQ           SUBGHZ_ADDR_FREQ
 
 #define SCREEN_WIDTH  240
 #define SCREENHEIGHT 320
@@ -71,8 +72,8 @@ struct Profile {
 };
 
 #define PROFILE_SIZE sizeof(Profile) // Size of the updated Profile struct
-#define ADDR_PROFILE_START 1300
-#define MAX_PROFILES 4  // Fixed: EEPROM only has 140 bytes, each profile is 32 bytes
+#define ADDR_PROFILE_START  SUBGHZ_ADDR_PROFILE_START
+#define MAX_PROFILES        SUBGHZ_MAX_PROFILES  // Fixed: EEPROM only has 140 bytes, each profile is 32 bytes
 #define ADDR_PROFILE_COUNT 0 
 
 int profileCount = 0;
@@ -1277,8 +1278,7 @@ static bool uiDrawn = false;
 #define RX_PIN 16         
 #define TX_PIN 26        
 
-#define EEPROM_SIZE 1440  // Increased to accommodate larger profiles
-#define ADDR_PROFILE_START 1300
+// EEPROM_SIZE and ADDR_PROFILE_START defined via eeprom_layout.h at top of file
 #define MAX_NAME_LENGTH 16 // Maximum length for profile name (including null terminator)
 
 #define BTN_UP     6
