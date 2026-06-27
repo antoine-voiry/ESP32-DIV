@@ -1,43 +1,61 @@
 #ifndef SHARED_H
 #define SHARED_H
 
-// ========== HALEHOUND COLOR PALETTE ==========
-// Jesse's Custom: Red/Purple/Pink theme (no yellow/orange)
-const uint16_t HALEHOUND_MAGENTA = 0x041F;  // Electric Blue - Primary (selected items)
-const uint16_t HALEHOUND_HOTPINK = 0xF81F;  // Hot Pink - Accents
-const uint16_t HALEHOUND_BRIGHT = 0xF81F;   // Hot Pink - Highlights
-const uint16_t HALEHOUND_VIOLET = 0x780F;   // Purple - Accent color
-const uint16_t HALEHOUND_DARK = 0x2841;     // #2B080A - Dark backgrounds
-const uint16_t HALEHOUND_CYAN = 0xF81F;     // Hot Pink for text (was cyan/blue)
-const uint16_t HALEHOUND_BLACK = 0x0000;    // #000000 - Pure black
-const uint16_t HALEHOUND_GUNMETAL = 0x18E3; // #1C1C1C - Gunmetal gray
-const uint16_t HALEHOUND_GREEN = 0x780F;    // Purple (was neon green)
+#include <Arduino.h>
 
-// Legacy color mappings (mapped to HALEHOUND palette)
-const uint16_t SHREDDY_TEAL = HALEHOUND_CYAN;       // Remap teal -> cyan
-const uint16_t SHREDDY_PINK = HALEHOUND_MAGENTA;    // Remap pink -> magenta
-const uint16_t SHREDDY_BLACK = HALEHOUND_BLACK;
-const uint16_t SHREDDY_BLUE = HALEHOUND_CYAN;
-const uint16_t SHREDDY_PURPLE = HALEHOUND_VIOLET;
-const uint16_t SHREDDY_GREEN = HALEHOUND_GREEN;
-const uint16_t SHREDDY_GUNMETAL = HALEHOUND_GUNMETAL;
+// ── Theme control ──────────────────────────────────────────────────────────
+enum ThemeID : uint8_t { THEME_DARK = 0, THEME_LIGHT = 1 };
 
-const uint16_t ORANGE = HALEHOUND_MAGENTA;   // Use magenta instead of orange
-const uint16_t GRAY = 0x8410;
-const uint16_t BLUE = HALEHOUND_CYAN;
-const uint16_t RED = 0xF800;
-const uint16_t GREEN = HALEHOUND_GREEN;
-const uint16_t BLACK = 0x0000;
-const uint16_t WHITE = 0xFFFF;
-const uint16_t LIGHT_GRAY = 0xC618;
-const uint16_t DARK_GRAY = HALEHOUND_GUNMETAL;
+void applyTheme(ThemeID id);
+ThemeID loadThemeFromEEPROM();
+extern ThemeID currentThemeID;
 
-#define TFT_DARKBLUE  0x3166
-#define TFT_LIGHTBLUE HALEHOUND_CYAN
-#define TFTWHITE     0xFFFF
-#define TFT_GRAY      0x8410
-#define SELECTED_ICON_COLOR HALEHOUND_MAGENTA
+// ── Semantic tokens (use these in all new code) ───────────────────────────
+extern uint16_t BG_BASE;        // screen fill
+extern uint16_t BG_SURFACE;     // card / status bar background
+extern uint16_t TEXT_PRIMARY;   // body text
+extern uint16_t TEXT_SECONDARY; // dim / inactive text
+extern uint16_t ACCENT_SELECT;  // selected item highlight
+extern uint16_t ACCENT_BORDER;  // unselected border / left-edge stripe
+extern uint16_t STATUS_OK;      // battery full, SD present, success
+extern uint16_t STATUS_WARN;    // battery mid, temperature caution
+extern uint16_t STATUS_ERR;     // battery low, error, critical
 
+// ── Legacy names — remapped by applyTheme(), do not use in new code ───────
+extern uint16_t HALEHOUND_MAGENTA;
+extern uint16_t HALEHOUND_HOTPINK;
+extern uint16_t HALEHOUND_BRIGHT;
+extern uint16_t HALEHOUND_VIOLET;
+extern uint16_t HALEHOUND_DARK;
+extern uint16_t HALEHOUND_CYAN;
+extern uint16_t HALEHOUND_BLACK;
+extern uint16_t HALEHOUND_GUNMETAL;
+extern uint16_t HALEHOUND_GREEN;
+extern uint16_t SHREDDY_TEAL;
+extern uint16_t SHREDDY_PINK;
+extern uint16_t SHREDDY_BLACK;
+extern uint16_t SHREDDY_BLUE;
+extern uint16_t SHREDDY_PURPLE;
+extern uint16_t SHREDDY_GREEN;
+extern uint16_t SHREDDY_GUNMETAL;
+extern uint16_t ORANGE;
+extern uint16_t GRAY;
+extern uint16_t BLUE;
+extern uint16_t RED;
+extern uint16_t GREEN;
+extern uint16_t BLACK;
+extern uint16_t WHITE;
+extern uint16_t LIGHT_GRAY;
+extern uint16_t DARK_GRAY;
+
+// ── Compile-time color constants (not theme-dependent) ────────────────────
+#define TFT_DARKBLUE      0x3166
+#define TFT_LIGHTBLUE     0x051F
+#define TFTWHITE          0xFFFF
+#define TFT_GRAY          0x8410
+#define SELECTED_ICON_COLOR ACCENT_SELECT
+
+// ── UI state flags ────────────────────────────────────────────────────────
 void displaySubmenu();
 
 extern bool in_sub_menu;
@@ -45,6 +63,5 @@ extern bool feature_active;
 extern bool submenu_initialized;
 extern bool is_main_menu;
 extern bool feature_exit_requested;
-
 
 #endif // SHARED_H

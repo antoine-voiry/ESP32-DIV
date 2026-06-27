@@ -184,87 +184,75 @@ bool isSDCardAvailable() {
 void drawStatusBar(float batteryVoltage, bool forceUpdate) {
   static int lastBatteryPercentage = -1;
   static int lastWiFiStrength = -1;
-  static String lastDisplayedTime = "";
 
   int batteryPercentage = map(batteryVoltage * 100, 300, 420, 0, 100);
   batteryPercentage = constrain(batteryPercentage, 0, 100);
 
-  // Get REAL WiFi signal strength (not random!)
   int wifiStrength = 0;
   wifi_mode_t wifiMode = WiFi.getMode();
-
   if (WiFi.status() == WL_CONNECTED) {
-    int rssi = WiFi.RSSI();
-    // Map RSSI (-100 to -30 dBm) to percentage (0-100%)
-    wifiStrength = constrain(map(rssi, -100, -30, 0, 100), 0, 100);
+    wifiStrength = constrain(map(WiFi.RSSI(), -100, -30, 0, 100), 0, 100);
   } else if (wifiMode == WIFI_AP || wifiMode == WIFI_AP_STA) {
-    // In AP mode, show full bars (we ARE the access point)
     wifiStrength = 100;
   }
-  // If not connected and not in AP mode, wifiStrength stays 0
 
   float internalTemp = readInternalTemperature();
   bool sdAvailable = false;
-  //bool sdAvailable = isSDCardAvailable();
 
   if (batteryPercentage != lastBatteryPercentage || wifiStrength != lastWiFiStrength || forceUpdate) {
-    int barHeight = 20;  // Status bar height
-    int x = 7;           // Padding for battery icon
-    int y = 4;           // Vertical offset
+    int barHeight = 24;
+    int x = 7;
+    int y = 4;
 
-    // **Dark Background with Neon Green Edge**
-    tft.fillRect(0, 0, tft.width(), barHeight, DARK_GRAY);
-    //tft.fillRect(0, barHeight - 2, tft.width(), 3, ORANGE); 
+    tft.fillRect(0, 0, tft.width(), barHeight, BG_SURFACE);
 
-    // **Draw Battery Icon (Hacker/Techy Look)**
-    tft.drawRoundRect(x, y, 22, 10, 2, SHREDDY_TEAL);        // Battery border
-    tft.fillRect(x + 22, y + 3, 2, 4, SHREDDY_TEAL);         // Battery terminal
-    
+    // Battery outline + terminal
+    tft.drawRoundRect(x, y, 22, 10, 2, ACCENT_BORDER);
+    tft.fillRect(x + 22, y + 3, 2, 4, ACCENT_BORDER);
+
+    // Battery fill: 3-tier color
     int batteryLevelWidth = map(batteryPercentage, 0, 100, 0, 20);
-    uint16_t batteryColor = (batteryPercentage > 20) ? GREEN : RED;
+    uint16_t batteryColor = (batteryPercentage > 50) ? STATUS_OK
+                          : (batteryPercentage > 20) ? STATUS_WARN : STATUS_ERR;
     tft.fillRoundRect(x + 2, y + 2, batteryLevelWidth, 6, 1, batteryColor);
 
-    // **Display Battery Percentage**
+    // Battery percentage text
     tft.setCursor(x + 30, y + 2);
-    tft.setTextColor(GREEN, DARK_GRAY);  
+    tft.setTextColor(TEXT_PRIMARY, BG_SURFACE);
     tft.setTextFont(1);
     tft.setTextSize(1);
     tft.print(String(batteryPercentage) + "%");
 
-    // **Draw Wi-Fi Signal Bars**
+    // Wi-Fi signal bars
     int wifiX = 180;
     int wifiY = y + 11;
     for (int i = 0; i < 4; i++) {
-      int barHeight = (i + 1) * 3;
+      int barH = (i + 1) * 3;
       int barWidth = 4;
       int barX = wifiX + i * 6;
       if (wifiStrength > i * 25) {
-        tft.fillRoundRect(barX, wifiY - barHeight, barWidth, barHeight, 1, GREEN);
+        tft.fillRoundRect(barX, wifiY - barH, barWidth, barH, 1, STATUS_OK);
       } else {
-        tft.drawRoundRect(barX, wifiY - barHeight, barWidth, barHeight, 1, SHREDDY_TEAL);
+        tft.drawRoundRect(barX, wifiY - barH, barWidth, barH, 1, ACCENT_BORDER);
       }
     }
 
-    // Temperature indicator
+    // Temperature icon
     if (internalTemp >= 55) {
-      tft.drawBitmap(203, y - 3, bitmap_icon_temp, 16, 16, RED);           // HOT - danger zone
+      tft.drawBitmap(203, y - 3, bitmap_icon_temp, 16, 16, STATUS_ERR);
     } else if (internalTemp >= 50) {
-      tft.drawBitmap(203, y - 3, bitmap_icon_temp, 16, 16, ORANGE);        // WARM - caution
+      tft.drawBitmap(203, y - 3, bitmap_icon_temp, 16, 16, STATUS_WARN);
     } else {
-      tft.drawBitmap(203, y - 3, bitmap_icon_temp, 16, 16, HALEHOUND_CYAN);  // COOL - normal
+      tft.drawBitmap(203, y - 3, bitmap_icon_temp, 16, 16, STATUS_OK);
     }
 
-    // **Display SD Card Icon (If Available)**
+    // SD card icon
     if (sdAvailable) {
-      tft.drawBitmap(220, y - 3, bitmap_icon_sdcard, 16, 16, GREEN);
+      tft.drawBitmap(220, y - 3, bitmap_icon_sdcard, 16, 16, STATUS_OK);
     } else {
-      tft.drawBitmap(220, y - 3, bitmap_icon_nullsdcard, 16, 16, RED);
+      tft.drawBitmap(220, y - 3, bitmap_icon_nullsdcard, 16, 16, STATUS_ERR);
     }
 
-    // **Bottom Line for Aesthetic (Neon Green)**
-    //tft.drawLine(0, barHeight - 1, tft.width(), barHeight - 1, ORANGE);  
-
-    // **Update Last Values**
     lastBatteryPercentage = batteryPercentage;
     lastWiFiStrength = wifiStrength;
   }

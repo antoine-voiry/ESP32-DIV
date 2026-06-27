@@ -11,6 +11,7 @@
 #include "subconfig.h"
 #include "utils.h"
 #include "shared.h"
+#include "eeprom_layout.h"
 #include "icon.h"
 #include "skull_bg.h"
 
@@ -98,11 +99,12 @@ const char *tools_submenu_items[tools_NUM_SUBMENU_ITEMS] = {
     "Back to Main Menu"};
 
 
-const int settings_NUM_SUBMENU_ITEMS = 4;
+const int settings_NUM_SUBMENU_ITEMS = 5;
 const char *settings_submenu_items[settings_NUM_SUBMENU_ITEMS] = {
     "Brightness",
     "Screen Timeout",
     "Device Info",
+    "Display Theme",
     "Back to Main Menu"};
 
 
@@ -169,6 +171,7 @@ const unsigned char *settings_submenu_icons[settings_NUM_SUBMENU_ITEMS] = {
     bitmap_icon_led,      // Brightness
     bitmap_icon_eye2,     // Screen Timeout
     bitmap_icon_stat,     // Device Info
+    bitmap_icon_eye2,     // Display Theme  (reuses eye icon)
     bitmap_icon_go_back
 };
 
@@ -269,22 +272,19 @@ void displaySubmenu() {
     menu_initialized = false;
     last_menu_index = -1;
 
-    tft.setTextFont(2);
+    tft.setTextFont(4);
     tft.setTextSize(1);
 
     if (!submenu_initialized) {
-        tft.fillScreen(TFT_BLACK);
+        tft.fillScreen(BG_BASE);
 
         for (int i = 0; i < active_submenu_size; i++) {
-            int yPos = 30 + i * 30; 
-            if (i == active_submenu_size - 1) yPos += 10;
-
-            tft.setTextColor((i == active_submenu_size - 1) ? SHREDDY_TEAL : SHREDDY_TEAL, TFT_BLACK);         
-            tft.drawBitmap(10, yPos, active_submenu_icons[i], 16, 16, (i == active_submenu_size - 1) ? SHREDDY_TEAL : SHREDDY_TEAL);            
-            tft.setCursor(30, yPos); 
-            if (i < active_submenu_size - 1) { 
-                tft.print("| "); 
-            }
+            int yPos = 30 + i * 40;
+            tft.fillRect(0, yPos, tft.width(), 40, BG_BASE);
+            tft.fillRect(0, yPos, 4, 40, ACCENT_BORDER);
+            tft.drawBitmap(10, yPos + 12, active_submenu_icons[i], 16, 16, TEXT_PRIMARY);
+            tft.setTextColor(TEXT_PRIMARY, BG_BASE);
+            tft.setCursor(32, yPos + 7);
             tft.print(active_submenu_items[i]);
         }
 
@@ -293,28 +293,25 @@ void displaySubmenu() {
     }
 
     if (last_submenu_index != current_submenu_index) {
+        // Deselect previous row
         if (last_submenu_index >= 0) {
-            int prev_yPos = 30 + last_submenu_index * 30;
-            if (last_submenu_index == active_submenu_size - 1) prev_yPos += 10;
-
-            tft.setTextColor((last_submenu_index == active_submenu_size - 1) ? SHREDDY_TEAL : SHREDDY_TEAL, TFT_BLACK);           
-            tft.drawBitmap(10, prev_yPos, active_submenu_icons[last_submenu_index], 16, 16, (last_submenu_index == active_submenu_size - 1) ? SHREDDY_TEAL : SHREDDY_TEAL);
-            tft.setCursor(30, prev_yPos);
-            if (last_submenu_index < active_submenu_size - 1) { 
-                tft.print("| "); 
-            }
+            int prev_yPos = 30 + last_submenu_index * 40;
+            tft.fillRect(0, prev_yPos, tft.width(), 40, BG_BASE);
+            tft.fillRect(0, prev_yPos, 4, 40, ACCENT_BORDER);
+            tft.drawBitmap(10, prev_yPos + 12, active_submenu_icons[last_submenu_index], 16, 16, TEXT_PRIMARY);
+            tft.setTextFont(4);
+            tft.setTextColor(TEXT_PRIMARY, BG_BASE);
+            tft.setCursor(32, prev_yPos + 7);
             tft.print(active_submenu_items[last_submenu_index]);
         }
 
-        int new_yPos = 30 + current_submenu_index * 30;
-        if (current_submenu_index == active_submenu_size - 1) new_yPos += 10;
-
-        tft.setTextColor((current_submenu_index == active_submenu_size - 1) ? ORANGE : ORANGE, TFT_BLACK);
-        tft.drawBitmap(10, new_yPos, active_submenu_icons[current_submenu_index], 16, 16, (current_submenu_index == active_submenu_size - 1) ? ORANGE : ORANGE);       
-        tft.setCursor(30, new_yPos);
-        if (current_submenu_index < active_submenu_size - 1) { 
-            tft.print("| "); 
-        }
+        // Highlight selected row
+        int new_yPos = 30 + current_submenu_index * 40;
+        tft.fillRoundRect(2, new_yPos, tft.width() - 4, 40, 4, ACCENT_SELECT);
+        tft.drawBitmap(10, new_yPos + 12, active_submenu_icons[current_submenu_index], 16, 16, BG_BASE);
+        tft.setTextFont(4);
+        tft.setTextColor(BG_BASE, ACCENT_SELECT);
+        tft.setCursor(32, new_yPos + 7);
         tft.print(active_submenu_items[current_submenu_index]);
 
         last_submenu_index = current_submenu_index;
@@ -326,8 +323,10 @@ void displaySubmenu() {
 const int COLUMN_WIDTH = 120;  
 const int X_OFFSET_LEFT = 10;  
 const int X_OFFSET_RIGHT = X_OFFSET_LEFT + COLUMN_WIDTH;  
-const int Y_START = 30;        
+const int Y_START = 34;
 const int Y_SPACING = 75;   
+
+void themeToggleLoop();  // defined in SETTINGS section below
 
 void displayMenu() {
 
@@ -348,7 +347,7 @@ const uint16_t icon_colors[NUM_MENU_ITEMS] = {
 
     if (!menu_initialized) {
         // Black background with skull in magenta
-        tft.fillScreen(TFT_BLACK);
+        tft.fillScreen(BG_BASE);
 
         // Center the skull on screen
         int skullX = (240 - SKULL_BG_WIDTH) / 2;
@@ -2029,6 +2028,51 @@ void handleSubGHzSubmenuButtons() {
 
 
 // ==================== SETTINGS MENU ====================
+
+void displayThemeScreen() {
+    tft.fillScreen(BG_BASE);
+    tft.setTextFont(4);
+    tft.setTextColor(TEXT_PRIMARY, BG_BASE);
+    tft.setCursor(30, 40);
+    tft.print("DISPLAY THEME");
+
+    tft.setTextFont(2);
+    tft.setTextColor(TEXT_SECONDARY, BG_BASE);
+    tft.setCursor(30, 100);
+    tft.print("Current:");
+
+    tft.setTextColor(ACCENT_SELECT, BG_BASE);
+    tft.setCursor(30, 125);
+    tft.print(currentThemeID == THEME_DARK ? "Graphite (Dark)" : "Paper (Light)");
+
+    tft.setTextColor(TEXT_SECONDARY, BG_BASE);
+    tft.setCursor(30, 200);
+    tft.print("LEFT/RIGHT: Switch");
+    tft.setCursor(30, 220);
+    tft.print("SELECT: Save & Exit");
+
+    drawStatusBar(currentBatteryVoltage, true);
+}
+
+void themeToggleLoop() {
+    displayThemeScreen();
+
+    while (!feature_exit_requested) {
+        if (isButtonPressed(BTN_LEFT) || isButtonPressed(BTN_RIGHT)) {
+            ThemeID next = (currentThemeID == THEME_DARK) ? THEME_LIGHT : THEME_DARK;
+            applyTheme(next);
+            displayThemeScreen();
+            delay(200);
+        }
+        if (isButtonPressed(BTN_SELECT)) {
+            feature_exit_requested = true;
+            delay(200);
+            break;
+        }
+        delay(50);
+    }
+}
+
 int brightness_level = 255;  // Default full brightness
 int screen_timeout_seconds = 60;  // Default 60 seconds
 
@@ -2220,7 +2264,7 @@ void handleSettingsSubmenuButtons() {
         delay(200);
 
         // Back to Main Menu
-        if (current_submenu_index == 3) {
+        if (current_submenu_index == 4) {
             in_sub_menu = false;
             feature_active = false;
             feature_exit_requested = false;
@@ -2261,6 +2305,20 @@ void handleSettingsSubmenuButtons() {
             feature_active = true;
             feature_exit_requested = false;
             displayDeviceInfo();
+            in_sub_menu = true;
+            is_main_menu = false;
+            submenu_initialized = false;
+            feature_active = false;
+            feature_exit_requested = false;
+            displaySubmenu();
+            delay(200);
+        }
+
+        // Display Theme
+        if (current_submenu_index == 3) {
+            feature_active = true;
+            feature_exit_requested = false;
+            themeToggleLoop();
             in_sub_menu = true;
             is_main_menu = false;
             submenu_initialized = false;
@@ -3015,7 +3073,10 @@ void handleButtons() {
 
 void setup() {
   Serial.begin(115200);
-  
+
+  EEPROM.begin(EEPROM_TOTAL_SIZE);
+  loadThemeFromEEPROM();   // must run before any tft color usage
+
   tft.init();
   tft.setRotation(0);
   tft.fillScreen(TFT_BLACK);
