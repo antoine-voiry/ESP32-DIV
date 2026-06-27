@@ -38,6 +38,8 @@ extern PCF8574 pcf;
 #include <Wire.h>
 #include <Preferences.h>
 #include <WebServer.h>
+#include <ESPAsyncWebServer.h>
+#include <AsyncTCP.h>
 #include <DNSServer.h>
 #include <EEPROM.h>
 #include <SD.h>
