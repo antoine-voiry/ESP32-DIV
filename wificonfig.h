@@ -12,7 +12,9 @@ void cleanupSD();
 
 #include <WiFi.h>
 #include <TFT_eSPI.h> 
+#ifndef ESP32_DIV_V1_BOARD
 #include <PCF8574.h>
+#endif
 #include <XPT2046_Touchscreen.h>
 
 extern TFT_eSPI tft;

@@ -16,6 +16,7 @@
 .idea/
 platform.ini
 platformio.ini
+build.sh
 
 # PlatformIO
 .pio/
@@ -28,3 +29,15 @@ build/
 # IDE temp files
 *.code-workspace
 *.sublime-workspace
+
+# Backup and temp files
+*.bak
+*.disabled
+
+# Audit and design reports (archived to docs/reports/ instead)
+audit-report-*.md
+design-report-*.md
+
+# Superpowers tooling
+skills-lock.json
+.markdownlint.json
