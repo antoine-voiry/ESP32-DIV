@@ -2339,13 +2339,12 @@ void handleSettingsSubmenuButtons() {
         y = ::map(p.y, TS_MAXY, TS_MINY, 0, 319);
 
         for (int i = 0; i < active_submenu_size; i++) {
-            int yPos = 30 + i * 30;
-            if (i == active_submenu_size - 1) yPos += 10;
+            int yPos = 30 + i * 40;
 
-            int button_x1 = 10;
+            int button_x1 = 0;
             int button_y1 = yPos;
-            int button_x2 = 110;
-            int button_y2 = yPos + (i == active_submenu_size - 1 ? 40 : 30);
+            int button_x2 = tft.width();
+            int button_y2 = yPos + 40;
 
             if (x >= button_x1 && x <= button_x2 && y >= button_y1 && y <= button_y2) {
                 current_submenu_index = i;
@@ -2353,8 +2352,8 @@ void handleSettingsSubmenuButtons() {
                 displaySubmenu();
                 delay(200);
 
-                // Back to Main Menu
-                if (current_submenu_index == 3) {
+                if (current_submenu_index == 4) {
+                    // Touch: Back to Main Menu
                     in_sub_menu = false;
                     feature_active = false;
                     feature_exit_requested = false;
@@ -2389,6 +2388,18 @@ void handleSettingsSubmenuButtons() {
                     feature_active = true;
                     feature_exit_requested = false;
                     displayDeviceInfo();
+                    in_sub_menu = true;
+                    is_main_menu = false;
+                    submenu_initialized = false;
+                    feature_active = false;
+                    feature_exit_requested = false;
+                    displaySubmenu();
+                    delay(200);
+                } else if (current_submenu_index == 3) {
+                    // Touch: Display Theme
+                    feature_active = true;
+                    feature_exit_requested = false;
+                    themeToggleLoop();
                     in_sub_menu = true;
                     is_main_menu = false;
                     submenu_initialized = false;
