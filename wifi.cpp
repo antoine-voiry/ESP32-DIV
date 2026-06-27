@@ -6,6 +6,7 @@ extern void cleanupNRF24();
 #include "shared.h"
 #include "icon.h"
 #include "Touchscreen.h"
+#include "webui.h"
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SD Card Cleanup - Release GPIO 5 for NRF24 radio3
@@ -333,6 +334,7 @@ void runUI() {
 }
 
 void ptmSetup() {
+  if (WebUIService::isActive()) WebUIService::teardown();
   Serial.begin(115200);
 
   pcf.pinMode(BTN_UP, INPUT_PULLUP);
@@ -841,7 +843,7 @@ void runUI() {
 }
 
 void beaconSpamSetup() {
-
+  if (WebUIService::isActive()) WebUIService::teardown();
   tft.fillScreen(TFT_BLACK);
 
   setupTouchscreen();
@@ -1296,6 +1298,7 @@ void statusBarTask(void *param) {
 }
 
 void deauthdetectSetup() {
+  if (WebUIService::isActive()) WebUIService::teardown();
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
 
@@ -1692,7 +1695,7 @@ void runUI() {
 }
 
 void wifiscanSetup() {
-  
+  if (WebUIService::isActive()) WebUIService::teardown();
   tft.setRotation(0);
   tft.fillScreen(TFT_BLACK);
   tft.setTextColor(SHREDDY_TEAL, TFT_BLACK);
@@ -2508,7 +2511,7 @@ void runUI() {
 }
 
 void cportalSetup() {
-
+  if (WebUIService::isActive()) WebUIService::teardown();
   tft.drawLine(0, 19, 240, 19, SHREDDY_TEAL);
   tft.fillRect(0, 37, 240, 320, TFT_BLACK);
 
@@ -3332,7 +3335,7 @@ void runUI() {
 }
 
 void deautherSetup() {
-
+  if (WebUIService::isActive()) WebUIService::teardown();
     tft.fillRect(0, 37, 240, 320, TFT_BLACK);
     
     setupTouchscreen();
