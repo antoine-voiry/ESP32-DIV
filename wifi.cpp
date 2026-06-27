@@ -335,10 +335,10 @@ void runUI() {
 void ptmSetup() {
   Serial.begin(115200);
 
-  pinMode(BTN_UP, INPUT_PULLUP);
-  pinMode(BTN_DOWN, INPUT_PULLUP);
-  pinMode(BTN_LEFT, INPUT_PULLUP);
-  pinMode(BTN_RIGHT, INPUT_PULLUP);
+  pcf.pinMode(BTN_UP, INPUT_PULLUP);
+  pcf.pinMode(BTN_DOWN, INPUT_PULLUP);
+  pcf.pinMode(BTN_LEFT, INPUT_PULLUP);
+  pcf.pinMode(BTN_RIGHT, INPUT_PULLUP);
 
   tft.fillScreen(TFT_BLACK);
 
@@ -413,8 +413,8 @@ void ptmLoop() {
   static uint32_t lastButtonTime = 0;
   const uint32_t debounceDelay = 200;
 
-  bool leftButtonState = !digitalRead(BTN_LEFT);
-  bool rightButtonState = !digitalRead(BTN_RIGHT);
+  bool leftButtonState = !pcf.digitalRead(BTN_LEFT);
+  bool rightButtonState = !pcf.digitalRead(BTN_RIGHT);
 
   uint32_t currentTime = millis();
 
@@ -688,7 +688,7 @@ void beaconSpam() {
 
         delay(1); 
         
-      if (digitalRead(BTN_SELECT) == LOW) {
+      if (pcf.digitalRead(BTN_SELECT) == LOW) {
         break;
       }
          
@@ -868,10 +868,10 @@ void beaconSpamSetup() {
   err = esp_wifi_set_promiscuous(true);
   if (err != ESP_OK) Serial.printf("Promiscuous set failed: %d\n", err);
 
-  pinMode(BTN_UP, INPUT_PULLUP);
-  pinMode(BTN_DOWN, INPUT_PULLUP);
-  pinMode(BTN_LEFT, INPUT_PULLUP);
-  pinMode(BTN_RIGHT, INPUT_PULLUP);
+  pcf.pinMode(BTN_UP, INPUT_PULLUP);
+  pcf.pinMode(BTN_DOWN, INPUT_PULLUP);
+  pcf.pinMode(BTN_LEFT, INPUT_PULLUP);
+  pcf.pinMode(BTN_RIGHT, INPUT_PULLUP);
 
   tft.print("[!] Press [UP] to start");
 
@@ -889,9 +889,9 @@ void beaconSpamLoop() {
 
   tft.drawLine(0, 19, 240, 19, SHREDDY_TEAL);
 
-  btnLeftPress = !digitalRead(BTN_LEFT);
-  btnRightPress = !digitalRead(BTN_RIGHT);
-  btnSelectPress = !digitalRead(BTN_UP);
+  btnLeftPress = !pcf.digitalRead(BTN_LEFT);
+  btnRightPress = !pcf.digitalRead(BTN_RIGHT);
+  btnSelectPress = !pcf.digitalRead(BTN_UP);
 
   delay(10);
 
@@ -927,7 +927,7 @@ void beaconSpamLoop() {
         output();
       }
   
-      if (!digitalRead(BTN_UP)) {   // LOW = pressed = user wants to stop
+      if (!pcf.digitalRead(BTN_UP)) {   // LOW = pressed = user wants to stop
         delay(50);
         break;
       }
@@ -1025,7 +1025,7 @@ void displayPrint(String text, uint16_t color, bool extraSpace = false) {
 
 void checkButtonPress() {
   // Check physical button
-  if (!digitalRead(BTN_UP)) {
+  if (!pcf.digitalRead(BTN_UP)) {
     vTaskDelay(200 / portTICK_PERIOD_MS);
     if (!stopScan) {
       stopScan = true;
@@ -1307,10 +1307,10 @@ void deauthdetectSetup() {
   float currentBatteryVoltage = readBatteryVoltage();
   drawStatusBar(currentBatteryVoltage, false);
 
-  pinMode(BTN_UP, INPUT_PULLUP);
-  pinMode(BTN_DOWN, INPUT_PULLUP);
-  pinMode(BTN_LEFT, INPUT_PULLUP);
-  pinMode(BTN_RIGHT, INPUT_PULLUP);
+  pcf.pinMode(BTN_UP, INPUT_PULLUP);
+  pcf.pinMode(BTN_DOWN, INPUT_PULLUP);
+  pcf.pinMode(BTN_LEFT, INPUT_PULLUP);
+  pcf.pinMode(BTN_RIGHT, INPUT_PULLUP);
 
   setupTouchscreen();
 
@@ -1573,7 +1573,7 @@ void handleButton() {
 
   bool updated = false;
 
-  if (!digitalRead(BTN_UP)) {
+  if (!pcf.digitalRead(BTN_UP)) {
     if (!isDetailView && currentIndex > 0) {
       currentIndex--;
       delay(200);
@@ -1583,7 +1583,7 @@ void handleButton() {
     lastButtonPress = currentMillis;
   }
 
-  if (!digitalRead(BTN_DOWN)) {
+  if (!pcf.digitalRead(BTN_DOWN)) {
     if (!isDetailView && currentIndex < WiFi.scanComplete() - 1) {
       currentIndex++;
       delay(200);
@@ -1593,7 +1593,7 @@ void handleButton() {
     lastButtonPress = currentMillis;
   }
 
-  if (!digitalRead(BTN_RIGHT)) {
+  if (!pcf.digitalRead(BTN_RIGHT)) {
     delay(200);
     if (!isScanning) {
       isDetailView = !isDetailView;
@@ -1602,7 +1602,7 @@ void handleButton() {
     lastButtonPress = currentMillis;
   }
 
-  if (!digitalRead(BTN_LEFT)) {
+  if (!pcf.digitalRead(BTN_LEFT)) {
     delay(200);
     if (isDetailView) {
       isDetailView = false;
@@ -1705,10 +1705,10 @@ void wifiscanSetup() {
   drawStatusBar(currentBatteryVoltage, false);
   runUI();
 
-  pinMode(BTN_UP, INPUT_PULLUP);
-  pinMode(BTN_DOWN, INPUT_PULLUP);
-  pinMode(BTN_RIGHT, INPUT_PULLUP);
-  pinMode(BTN_LEFT, INPUT_PULLUP);
+  pcf.pinMode(BTN_UP, INPUT_PULLUP);
+  pcf.pinMode(BTN_DOWN, INPUT_PULLUP);
+  pcf.pinMode(BTN_RIGHT, INPUT_PULLUP);
+  pcf.pinMode(BTN_LEFT, INPUT_PULLUP);
 
   setupTouchscreen();
 
@@ -3153,7 +3153,7 @@ void handleButtons() {
         // ========== SCAN SCREEN ==========
 
         // UP = Previous network (matches working pattern)
-        if (!digitalRead(BTN_UP)) {
+        if (!pcf.digitalRead(BTN_UP)) {
             if (network_count > 0 && highlightedIndex > 0) {
                 highlightedIndex--;
                 delay(200);
@@ -3166,7 +3166,7 @@ void handleButtons() {
         }
 
         // DOWN = Next network (same pattern as UP)
-        if (!digitalRead(BTN_DOWN)) {
+        if (!pcf.digitalRead(BTN_DOWN)) {
             if (network_count > 0 && highlightedIndex < network_count - 1) {
                 highlightedIndex++;
                 delay(200);
@@ -3179,7 +3179,7 @@ void handleButtons() {
         }
 
         // LEFT = Previous PAGE (matches main menu pattern)
-        if (!digitalRead(BTN_LEFT)) {
+        if (!pcf.digitalRead(BTN_LEFT)) {
             if (current_page > 0) {
                 current_page--;
                 // Keep highlightedIndex on the new page
@@ -3193,7 +3193,7 @@ void handleButtons() {
         }
 
         // RIGHT = Next PAGE (matches main menu pattern)
-        if (!digitalRead(BTN_RIGHT)) {
+        if (!pcf.digitalRead(BTN_RIGHT)) {
             if ((current_page + 1) * networks_per_page < network_count) {
                 current_page++;
                 // Move highlightedIndex to first item on new page
@@ -3210,7 +3210,7 @@ void handleButtons() {
         // ========== ATTACK SCREEN ==========
 
         // DOWN = Toggle attack start/stop
-        if (!digitalRead(BTN_DOWN)) {
+        if (!pcf.digitalRead(BTN_DOWN)) {
             delay(200);
             attack_running = !attack_running;
             if (!attack_running) {
@@ -3221,7 +3221,7 @@ void handleButtons() {
         }
 
         // UP = Back to scan screen
-        if (!digitalRead(BTN_UP)) {
+        if (!pcf.digitalRead(BTN_UP)) {
             delay(200);
             attack_running = false;
             last_packet_time = 0;

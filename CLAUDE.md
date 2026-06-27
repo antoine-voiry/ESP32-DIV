@@ -1,16 +1,17 @@
 # PROJECT TARGET PROTOCOL: ESP32-DIV V1 LEGACY PORT
 
-You operate as a Senior Core Firmware Engineer. Your objective is absolute code safety, minimal token usage, and strict alignment to Espressif hardware specs on a direct-GPIO ESP32-WROOM-32 baseline with zero I2C expanders.
+You operate as a Senior Core Firmware Engineer. Your objective is absolute code safety, minimal token usage, and strict alignment to Espressif hardware specs on an ESP32-WROOM-32 baseline whose navigation buttons are driven through a PCF8574 I2C expander (GPIO starvation forces buttons off the native MCU pins).
 
 ---
 
 ## ARCHITECTURE MANDATE
 
-- **Hardware Layer (IMMUTABLE):** ESP32-WROOM-32 with direct GPIO pinouts. NO I2C expanders (PCF8574).
+- **Hardware Layer (IMMUTABLE):** ESP32-WROOM-32. Buttons are wired to a **PCF8574 I2C expander** (NOT native GPIO) due to severe pin starvation — the TFT, SD card, CC1101 (Sub-GHz) and NRF24L01 (2.4GHz) consume nearly all SPI/GPIO lines.
   - Touchscreen: XPT2046 via SPI (HSPI): CLK=25, MOSI=32, MISO=35, CS=33, IRQ=34
-  - Buttons: Direct GPIO reads (6, 3, 4, 5, 7)
+  - Buttons: **PCF8574 expander channels** 6/3/4/5/7 (UP/DOWN/LEFT/RIGHT/SELECT), read via `pcf.digitalRead()` on the default I2C bus (SDA=21, SCL=22). These numbers are expander P0–P7 lines, **never** ESP32 GPIOs.
   - TFT display: Native SPI pins
-- **Software Layer (MUTABLE):** Port high-level business logic from v1.7.0+ while completely stripping hardware abstraction for newer architectures (S3, PCF8574).
+  - Radios: CC1101 (Antenna 1) + NRF24L01+ (Antenna 2) on the shared SPI bus, each with its own CS (and CE/GDO lines).
+- **Software Layer (MUTABLE):** Port high-level business logic from v1.7.0+. Preserve the PCF8574 button abstraction; only strip hardware support for *newer* architectures (ESP32-S3).
 
 ---
 
@@ -59,7 +60,8 @@ You operate as a Senior Core Firmware Engineer. Your objective is absolute code 
 - **Absolute CLI Path:**
   `/Users/antoine/.vscode/extensions/thelastoutpostworkshop.arduino-maker-workshop-1.1.5-darwin-arm64/arduino_cli/darwin/arm64/arduino-cli`
 - **Command Build/Verify:**
-  `/Users/antoine/.vscode/extensions/thelastoutpostworkshop.arduino-maker-workshop-1.1.5-darwin-arm64/arduino_cli/darwin/arm64/arduino-cli compile --fqbn esp32:esp32:esp32 --board-options "FlashSize=16M,PartitionScheme=huge_app,CPUFreq=240,FlashMode=dio,FlashFreq=80,UploadSpeed=921600" --warnings default --build-property "compiler.c.elf.extra_flags=-Wl,-zmuldefs" --build-property "build.extra_flags=-DESP32_DIV_V1_BOARD" --output-dir build .`
+  `/Users/antoine/.vscode/extensions/thelastoutpostworkshop.arduino-maker-workshop-1.1.5-darwin-arm64/arduino_cli/darwin/arm64/arduino-cli compile --fqbn esp32:esp32:esp32 --board-options "FlashSize=16M,PartitionScheme=huge_app,CPUFreq=240,FlashMode=dio,FlashFreq=80,UploadSpeed=921600" --warnings default --build-property "compiler.c.elf.extra_flags=-Wl,-zmuldefs" --output-dir build .`
+  > Do **NOT** pass `-DESP32_DIV_V1_BOARD`: that macro gates out `<PCF8574.h>` and the button abstraction. The buttons require the PCF8574, so the macro must stay undefined.
 - **Command Flash:**
   `/Users/antoine/.vscode/extensions/thelastoutpostworkshop.arduino-maker-workshop-1.1.5-darwin-arm64/arduino_cli/darwin/arm64/arduino-cli upload -p /dev/cu.usbserial-0001 --fqbn esp32:esp32:esp32 .`
 - **Command Monitor:**
@@ -86,9 +88,9 @@ You operate as a Senior Core Firmware Engineer. Your objective is absolute code 
 
 **DO NOT inject these patterns — they will silently corrupt hardware or fail CI:**
 
-- ❌ `expander.digitalWrite()` or `expander.digitalRead()` — V1 has NO I2C expander.
-- ❌ Including `<PCF8574.h>` without guarding with `#ifdef ESP32_DIV_V1_BOARD` — this board uses native GPIO only.
-- ❌ Modifying pin definitions in touch/button reads — V1 pinout is hardware-locked (GPIO 6,3,4,5,7 for buttons; GPIO 25,32,35,33,34 for XPT2046).
+- ❌ **Assigning `pinMode()`/`digitalRead()` directly to button numbers 6/3/4/5/7 on the ESP32** — these are PCF8574 expander channels. Native GPIO 6/7 are SPI-flash lines and GPIO 3 is UART0 RX; driving them reconfigures the flash/UART interface and triggers an immediate `TG1WDT_SYS_RESET` cache-panic boot loop. Always read buttons via `pcf.digitalRead()`.
+- ❌ Removing `<PCF8574.h>` or the `PCF8574 pcf(0x20)` object — buttons depend on it. Read it on the default I2C bus (SDA=21, SCL=22).
+- ❌ Modifying pin definitions in touch/button reads — pinout is hardware-locked (PCF8574 channels 6,3,4,5,7 for buttons; GPIO 25,32,35,33,34 for XPT2046).
 - ❌ Using `ESP32-S3` registers, hardware USB-OTG, or S3 vector optimizations — target is `ESP32-WROOM-32` (dual-core, no S3 silicon).
 - ❌ Altering `User_Setup.h` or TFT SPI definitions — they are baseline-locked.
 - ❌ Omitting `--build-property "compiler.c.elf.extra_flags=-Wl,-zmuldefs"` from the compile command — the ESP32 Arduino core 2.0.17 SDK `libnet80211.a` has a duplicate symbol (`ieee80211_raw_frame_sanity_check`) that collides with `wifi.cpp`. This flag is a **mandatory linker workaround** for this core version; removing it causes a link-time `multiple definition` error.
@@ -110,7 +112,7 @@ You operate as a Senior Core Firmware Engineer. Your objective is absolute code 
 - **RF24** (1.6.1) — nRF24L01+ wireless 2.4GHz transceiver
 - **SmartRC-CC1101-Driver-Lib** (3.0.2) — CC1101 Sub-GHz transceiver driver (provides ELECHOUSE_CC1101_SRC_DRV.h)
 - **rc-switch** (2.6.4) — 433/315MHz RF remote control protocol encoding/decoding
-- **PCF8574** (0.4.5) — I2C GPIO expander (**DEPRECATED for V1; guard all includes**)
+- **PCF8574** (0.4.5) — I2C GPIO expander (**REQUIRED for V1: drives the navigation buttons at 0x20 on SDA=21/SCL=22**)
 - **arduinoFFT** (2.0.4) — Fast Fourier Transform for spectrum analysis
 
 **⚠️ CC1101 Compatibility Note:**
@@ -138,9 +140,9 @@ All non-source artifacts live under `docs/` and are committed to the repo:
 
 **Every pull request MUST satisfy:**
 
-1. ✅ Zero `expander.` calls anywhere in the codebase.
-2. ✅ All `#include` statements for `PCF8574.h` guarded with `#ifndef ESP32_DIV_V1_BOARD` or removed.
-3. ✅ Pin definitions match V1 hardware spec (touch: 25/32/35/33/34; buttons: 6/3/4/5/7).
+1. ✅ Buttons read via `pcf.digitalRead()` — zero direct `pinMode()`/`digitalRead()` on channels 6/3/4/5/7. `<PCF8574.h>` and the `PCF8574 pcf(0x20)` object are present and used.
+2. ✅ No native-GPIO access to flash pins (6/7) or UART0 RX (3).
+3. ✅ Pin definitions match V1 hardware spec (touch: GPIO 25/32/35/33/34; buttons: PCF8574 channels 6/3/4/5/7 via I2C SDA=21/SCL=22).
 4. ✅ No S3-specific code (USB, PSRAM silicon assumptions, strap pins).
 5. ✅ Builds cleanly with Arduino IDE without modification.
 6. ✅ Audit/design reports live in `docs/reports/`, not repo root.

@@ -39,6 +39,7 @@ void cleanupNRF24();
 #define XPT2046_CS    33
 
 extern TFT_eSPI tft;
+extern PCF8574 pcf;
 
 
 namespace BleJammer {

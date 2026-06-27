@@ -1,7 +1,3 @@
-#ifndef ESP32_DIV_V1_BOARD
-#define ESP32_DIV_V1_BOARD
-#endif
-
 #include <Arduino.h>
 #include <TFT_eSPI.h>
 #include <Wire.h>
@@ -19,6 +15,9 @@
 #include "skull_bg.h"
 
 TFT_eSPI tft = TFT_eSPI();
+
+#define pcf_ADDR 0x20
+PCF8574 pcf(pcf_ADDR);
 
 #define BTN_UP     6
 #define BTN_DOWN   3
@@ -238,7 +237,7 @@ void updateActiveSubmenu() {
 }
 
 bool isButtonPressed(int buttonPin) {
-  return !digitalRead(buttonPin);
+  return !pcf.digitalRead(buttonPin);
 }
 
 float currentBatteryVoltage = 0.0;  // Initialize to 0, updated in loop() by readBatteryVoltage()
@@ -3033,11 +3032,19 @@ void setup() {
   //pinMode(BACKLIGHT_PIN, OUTPUT);
   //digitalWrite(BACKLIGHT_PIN, HIGH);
   
-  pinMode(BTN_UP, INPUT_PULLUP);
-  pinMode(BTN_DOWN, INPUT_PULLUP);
-  pinMode(BTN_LEFT, INPUT_PULLUP);
-  pinMode(BTN_RIGHT, INPUT_PULLUP);
-  pinMode(BTN_SELECT, INPUT_PULLUP);
+  pcf.begin();
+  pcf.pinMode(BTN_UP, INPUT_PULLUP);
+  pcf.pinMode(BTN_DOWN, INPUT_PULLUP);
+  pcf.pinMode(BTN_LEFT, INPUT_PULLUP);
+  pcf.pinMode(BTN_RIGHT, INPUT_PULLUP);
+  pcf.pinMode(BTN_SELECT, INPUT_PULLUP);
+
+  for (int pin = 0; pin < 8; pin++) {
+    Serial.print("Button ");
+    Serial.print(pin);
+    Serial.print(": ");
+    Serial.println(pcf.digitalRead(pin) ? "Released" : "Pressed");
+  }
 
   displayMenu();
   currentBatteryVoltage = readBatteryVoltage();  // Update now that ADC is initialized

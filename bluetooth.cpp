@@ -428,7 +428,7 @@ void handleButtonPress(int pin, void (*callback)()) {
   static uint8_t lastState[8] = {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH};
 
   int index = pin % 8;
-  uint8_t currentState = digitalRead(pin);
+  uint8_t currentState = pcf.digitalRead(pin);
 
   if (currentState == LOW && lastState[index] == HIGH) {
     unsigned long currentTime = millis();
@@ -631,11 +631,11 @@ void spooferSetup() {
   pAdvertising->setDeviceAddress(null_addr, BLE_ADDR_TYPE_RANDOM);
   //delay(500);
 
-  pinMode(BTN_UP, INPUT_PULLUP);
-  pinMode(BTN_DOWN, INPUT_PULLUP);
-  pinMode(BTN_LEFT, INPUT_PULLUP);
-  pinMode(BTN_RIGHT, INPUT_PULLUP);
-  pinMode(BTN_SELECT, INPUT_PULLUP);
+  pcf.pinMode(BTN_UP, INPUT_PULLUP);
+  pcf.pinMode(BTN_DOWN, INPUT_PULLUP);
+  pcf.pinMode(BTN_LEFT, INPUT_PULLUP);
+  pcf.pinMode(BTN_RIGHT, INPUT_PULLUP);
+  pcf.pinMode(BTN_SELECT, INPUT_PULLUP);
 
   uiDrawn = false;
   tft.drawLine(0, 19, 240, 19, SHREDDY_TEAL);
@@ -987,17 +987,17 @@ void Print(String text, uint16_t color, bool extraSpace = false) {
 void checkButtons() {
   unsigned long currentTime = millis();
 
-  if (digitalRead(BTN_UP) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
+  if (pcf.digitalRead(BTN_UP) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
     jammerToggleRequested = true;
     lastButtonPressTime = currentTime;
   }
 
-  if (digitalRead(BTN_RIGHT) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
+  if (pcf.digitalRead(BTN_RIGHT) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
     modeChangeRequested = true;
     lastButtonPressTime = currentTime;
   }
 
-  if (digitalRead(BTN_LEFT) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
+  if (pcf.digitalRead(BTN_LEFT) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
     modeChangeRequested = true;
     lastButtonPressTime = currentTime;
   }
@@ -1159,11 +1159,11 @@ void blejamSetup() {
 
   Print("[*] Initializing PCF8574...", SHREDDY_TEAL, false);
 
-  pinMode(BTN_UP, INPUT_PULLUP);
-  pinMode(BTN_DOWN, INPUT_PULLUP);
-  pinMode(BTN_LEFT, INPUT_PULLUP);
-  pinMode(BTN_RIGHT, INPUT_PULLUP);
-  pinMode(BTN_SELECT, INPUT_PULLUP);
+  pcf.pinMode(BTN_UP, INPUT_PULLUP);
+  pcf.pinMode(BTN_DOWN, INPUT_PULLUP);
+  pcf.pinMode(BTN_LEFT, INPUT_PULLUP);
+  pcf.pinMode(BTN_RIGHT, INPUT_PULLUP);
+  pcf.pinMode(BTN_SELECT, INPUT_PULLUP);
 
   Print("[+] System Ready!", TFT_GREEN, true);
 }
@@ -1272,7 +1272,7 @@ void handleButtons() {
   unsigned long currentMillis = millis();
   if (currentMillis - lastButtonPress < debounceTime) return;
 
-  if (!digitalRead(BTN_UP)) {
+  if (!pcf.digitalRead(BTN_UP)) {
     if (!isDetailView && currentIndex > 0) {
       currentIndex--;
       delay(200);
@@ -1283,7 +1283,7 @@ void handleButtons() {
     lastButtonPress = currentMillis;
   }
 
-  if (!digitalRead(BTN_DOWN)) {
+  if (!pcf.digitalRead(BTN_DOWN)) {
     if (!isDetailView && currentIndex < bleResults.getCount() - 1) {
       currentIndex++;
       delay(200);
@@ -1294,7 +1294,7 @@ void handleButtons() {
     lastButtonPress = currentMillis;
   }
 
-  if (!digitalRead(BTN_RIGHT)) {
+  if (!pcf.digitalRead(BTN_RIGHT)) {
     delay(200);
     if (!isScanning) {
       isDetailView = !isDetailView;
@@ -1304,7 +1304,7 @@ void handleButtons() {
     lastButtonPress = currentMillis;
   }
 
-  if (!digitalRead(BTN_LEFT)) {
+  if (!pcf.digitalRead(BTN_LEFT)) {
     delay(200);
     if (isDetailView) {
       isDetailView = false;
@@ -1496,10 +1496,10 @@ void bleScanSetup() {
 
   setupTouchscreen();
 
-  pinMode(BTN_UP, INPUT_PULLUP);
-  pinMode(BTN_DOWN, INPUT_PULLUP);
-  pinMode(BTN_RIGHT, INPUT_PULLUP);
-  pinMode(BTN_LEFT, INPUT_PULLUP);
+  pcf.pinMode(BTN_UP, INPUT_PULLUP);
+  pcf.pinMode(BTN_DOWN, INPUT_PULLUP);
+  pcf.pinMode(BTN_RIGHT, INPUT_PULLUP);
+  pcf.pinMode(BTN_LEFT, INPUT_PULLUP);
 
   BLEDevice::init("");
   bleScan = BLEDevice::getScan();
@@ -1601,7 +1601,7 @@ uint16_t Buffercolor[MAX_LINES];
 int Index = 0;
 
 bool isSelectButtonPressed() {
-  return digitalRead(BTN_SELECT) == LOW;  
+  return pcf.digitalRead(BTN_SELECT) == LOW;  
 }
 
 byte getRegister(byte r) {
@@ -2129,7 +2129,7 @@ void scannerSetup() {
   pinMode(CSN, OUTPUT);
   pinMode(BUTTON, INPUT_PULLUP);
 
-  pinMode(BTN_SELECT, INPUT_PULLUP);
+  pcf.pinMode(BTN_SELECT, INPUT_PULLUP);
 
   disable();
   powerUp();
@@ -2481,7 +2481,7 @@ void scanAllChannels() {
     // Scan each channel multiple times for better detection
     for (int sample = 0; sample < 30 && analyzerRunning; sample++) {
         // Check button every sample to prevent freeze
-        if (digitalRead(BTN_SELECT) == LOW) {
+        if (pcf.digitalRead(BTN_SELECT) == LOW) {
             analyzerRunning = false;
             feature_exit_requested = true;
             return;
@@ -2631,7 +2631,7 @@ void analyzerSetup() {
 
 void analyzerLoop() {
     // Check for exit button
-    if (digitalRead(BTN_SELECT) == LOW) {
+    if (pcf.digitalRead(BTN_SELECT) == LOW) {
         analyzerRunning = false;
         feature_exit_requested = true;
         // Reinitialize touch SPI before exiting - NRF24 reconfigured SPI bus
@@ -2641,7 +2641,7 @@ void analyzerLoop() {
     }
 
     // Check for reset peaks button (LEFT)
-    if (digitalRead(BTN_LEFT) == LOW) {
+    if (pcf.digitalRead(BTN_LEFT) == LOW) {
         resetPeaks();
         delay(200);
     }
@@ -3136,13 +3136,13 @@ void checkButtons() {
     unsigned long currentTime = millis();
 
     // UP = Toggle jammer
-    if (digitalRead(6) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
+    if (pcf.digitalRead(6) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
         jammerToggleRequested = true;
         lastButtonPressTime = currentTime;
     }
 
     // RIGHT = Next WiFi channel
-    if (digitalRead(5) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
+    if (pcf.digitalRead(5) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
         currentWiFiChannel++;
         if (currentWiFiChannel > 13) currentWiFiChannel = ALL_CHANNELS_MODE;
         if (jammerActive) {
@@ -3159,7 +3159,7 @@ void checkButtons() {
     }
 
     // LEFT = Previous WiFi channel
-    if (digitalRead(4) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
+    if (pcf.digitalRead(4) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
         currentWiFiChannel--;
         if (currentWiFiChannel < 0) currentWiFiChannel = 13;
         if (jammerActive) {
@@ -3212,10 +3212,10 @@ void wlanjammerSetup() {
     pinMode(WLAN_CSN, OUTPUT);
 
     // Initialize PCF buttons
-    pinMode(4, INPUT_PULLUP);  // LEFT
-    pinMode(5, INPUT_PULLUP);  // RIGHT
-    pinMode(6, INPUT_PULLUP);  // UP
-    pinMode(7, INPUT_PULLUP);  // SELECT
+    pcf.pinMode(4, INPUT_PULLUP);  // LEFT
+    pcf.pinMode(5, INPUT_PULLUP);  // RIGHT
+    pcf.pinMode(6, INPUT_PULLUP);  // UP
+    pcf.pinMode(7, INPUT_PULLUP);  // SELECT
 
     jammerActive = false;
     currentWiFiChannel = ALL_CHANNELS_MODE;
@@ -3278,7 +3278,7 @@ void wlanjammerSetup() {
 
 void wlanjammerLoop() {
     // Check for exit
-    if (digitalRead(7) == LOW) {
+    if (pcf.digitalRead(7) == LOW) {
         if (jammerActive) {
             stopJamming();
         }
@@ -3425,17 +3425,17 @@ void Print(String text, uint16_t color, bool extraSpace = false) {
 void checkButtons() {
   unsigned long currentTime = millis();
 
-  if (digitalRead(BTN_UP) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
+  if (pcf.digitalRead(BTN_UP) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
     jammerToggleRequested = true;
     lastButtonPressTime = currentTime;
   }
 
-  if (digitalRead(BTN_RIGHT) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
+  if (pcf.digitalRead(BTN_RIGHT) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
     modeChangeRequested = true;
     lastButtonPressTime = currentTime;
   }
 
-  if (digitalRead(BTN_LEFT) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
+  if (pcf.digitalRead(BTN_LEFT) == LOW && currentTime - lastButtonPressTime > debounceDelay) {
     modeChangeRequested1 = true;
     lastButtonPressTime = currentTime;
   }
@@ -3624,11 +3624,11 @@ void prokillSetup() {
 
   Print("[*] Initializing PCF8574...", SHREDDY_TEAL, false);
 
-  pinMode(BTN_UP, INPUT_PULLUP);
-  pinMode(BTN_DOWN, INPUT_PULLUP);
-  pinMode(BTN_LEFT, INPUT_PULLUP);
-  pinMode(BTN_RIGHT, INPUT_PULLUP);
-  pinMode(BTN_SELECT, INPUT_PULLUP);
+  pcf.pinMode(BTN_UP, INPUT_PULLUP);
+  pcf.pinMode(BTN_DOWN, INPUT_PULLUP);
+  pcf.pinMode(BTN_LEFT, INPUT_PULLUP);
+  pcf.pinMode(BTN_RIGHT, INPUT_PULLUP);
+  pcf.pinMode(BTN_SELECT, INPUT_PULLUP);
 
   Print("[+] System Ready!", TFT_GREEN, true);
 }
@@ -4456,10 +4456,10 @@ public:
     setupTouchscreen();
 
     // Initialize button pins for navigation
-    pinMode(BTN_UP, INPUT_PULLUP);
-    pinMode(BTN_DOWN, INPUT_PULLUP);
-    pinMode(BTN_LEFT, INPUT_PULLUP);
-    pinMode(BTN_RIGHT, INPUT_PULLUP);
+    pcf.pinMode(BTN_UP, INPUT_PULLUP);
+    pcf.pinMode(BTN_DOWN, INPUT_PULLUP);
+    pcf.pinMode(BTN_LEFT, INPUT_PULLUP);
+    pcf.pinMode(BTN_RIGHT, INPUT_PULLUP);
 
     initDisplay();
 
@@ -4564,7 +4564,7 @@ public:
     lastButtonCheck = millis();
 
     // UP button - scroll up / previous device
-    if (!digitalRead(BTN_UP)) {
+    if (!pcf.digitalRead(BTN_UP)) {
       if (currentView == ViewMode::LIST_VIEW) {
         if (highlightedRow > 0) {
           highlightedRow--;
@@ -4582,7 +4582,7 @@ public:
     }
 
     // DOWN button - scroll down / next device
-    if (!digitalRead(BTN_DOWN)) {
+    if (!pcf.digitalRead(BTN_DOWN)) {
       if (currentView == ViewMode::LIST_VIEW) {
         int maxHighlight = min(VISIBLE_ROWS - 1, deviceCount - listScrollOffset - 1);
         if (highlightedRow < maxHighlight) {
@@ -4601,7 +4601,7 @@ public:
     }
 
     // LEFT button - back to list from detail
-    if (!digitalRead(BTN_LEFT)) {
+    if (!pcf.digitalRead(BTN_LEFT)) {
       if (currentView == ViewMode::DETAIL_VIEW) {
         currentView = ViewMode::LIST_VIEW;
         lastListUpdate = 0;
@@ -4609,7 +4609,7 @@ public:
     }
 
     // RIGHT button - select device / enter detail view
-    if (!digitalRead(BTN_RIGHT)) {
+    if (!pcf.digitalRead(BTN_RIGHT)) {
       if (currentView == ViewMode::LIST_VIEW && deviceCount > 0) {
         selectedDeviceIndex = listScrollOffset + highlightedRow;
         if (selectedDeviceIndex < deviceCount) {
