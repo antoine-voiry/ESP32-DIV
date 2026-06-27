@@ -131,7 +131,6 @@ uint8_t temprature_sens_read();
 #ifdef __cplusplus
 }
 #endif
-uint8_t temprature_sens_read();
 
 unsigned long lastStatusBarUpdate = 0;
 const int STATUS_BAR_UPDATE_INTERVAL = 1000; 
@@ -187,11 +186,7 @@ void drawStatusBar(float batteryVoltage, bool forceUpdate) {
   static int lastWiFiStrength = -1;
   static String lastDisplayedTime = "";
 
-  // IGNORE the passed voltage - read FRESH every time!
-  // The caller passes a stale global that's set once at startup
-  float freshVoltage = readBatteryVoltage();
-
-  int batteryPercentage = map(freshVoltage * 100, 300, 420, 0, 100);
+  int batteryPercentage = map(batteryVoltage * 100, 300, 420, 0, 100);
   batteryPercentage = constrain(batteryPercentage, 0, 100);
 
   // Get REAL WiFi signal strength (not random!)
