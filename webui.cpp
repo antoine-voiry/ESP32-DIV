@@ -60,16 +60,29 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient*,
     if (type != WS_EVT_DATA) return;
     AwsFrameInfo* info = (AwsFrameInfo*)arg;
     if (!info->final || info->index != 0 || info->len != len || info->opcode != WS_TEXT) return;
-    data[len] = 0;
-    String msg = (char*)data;
-    String action = jsonStr(msg, "action");
-    if (action == "launch") {
-        pendingCat  = (int8_t)jsonInt(msg, "category");
-        pendingItem = (int8_t)jsonInt(msg, "item");
-    } else if (action == "stop") {
+    // Copy to null-terminated stack buffer — avoids String heap ops on Core 0
+    const size_t MAX_MSG = 128;
+    if (len >= MAX_MSG) return;          // drop oversized frames
+    char buf[MAX_MSG];
+    memcpy(buf, data, len);
+    buf[len] = '\0';                     // safe: buf is MAX_MSG, len < MAX_MSG
+
+    // Extract action without String allocation
+    const char* actionPtr = strstr(buf, "\"action\":\"");
+    if (!actionPtr) return;
+    actionPtr += 10;  // skip past "action":"
+
+    if (strncmp(actionPtr, "launch\"", 7) == 0) {
+        // Extract category and item integers
+        const char* catPtr = strstr(buf, "\"category\":");
+        const char* itmPtr = strstr(buf, "\"item\":");
+        if (catPtr && itmPtr) {
+            pendingCat  = (int8_t)atoi(catPtr + 11);
+            pendingItem = (int8_t)atoi(itmPtr + 7);
+        }
+    } else if (strncmp(actionPtr, "stop\"", 5) == 0) {
         pendingStop = true;
-    } else if (action == "status") {
-        // status response built in loop() — set a flag
+    } else if (strncmp(actionPtr, "status\"", 7) == 0) {
         pendingCat = -2;  // sentinel: status request
     }
 }
