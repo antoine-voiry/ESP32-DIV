@@ -982,10 +982,10 @@ void ReplayAttackSetup() {
   //mySwitch.enableReceive(16); 
   //mySwitch.enableTransmit(26); 
   
-  pcf.pinMode(BTN_LEFT, INPUT_PULLUP);
-  pcf.pinMode(BTN_RIGHT, INPUT_PULLUP);
-  pcf.pinMode(BTN_UP, INPUT_PULLUP);
-  pcf.pinMode(BTN_DOWN, INPUT_PULLUP);
+  pinMode(BTN_LEFT, INPUT_PULLUP);
+  pinMode(BTN_RIGHT, INPUT_PULLUP);
+  pinMode(BTN_UP, INPUT_PULLUP);
+  pinMode(BTN_DOWN, INPUT_PULLUP);
 
   sampling_period = round(1000000*(1.0/FrequencySUB));
 
@@ -1068,10 +1068,10 @@ void ReplayAttackLoop() {
     static unsigned long lastDebounceTime = 0;
     const unsigned long debounceDelay = 200;
 
-    int btnLeftState = pcf.digitalRead(BTN_LEFT);
-    int btnRightState = pcf.digitalRead(BTN_RIGHT);
-    int btnSelectState = pcf.digitalRead(BTN_UP);
-    int btndownState = pcf.digitalRead(BTN_DOWN);
+    int btnLeftState = digitalRead(BTN_LEFT);
+    int btnRightState = digitalRead(BTN_RIGHT);
+    int btnSelectState = digitalRead(BTN_UP);
+    int btndownState = digitalRead(BTN_DOWN);
     
     do_sampling();
     delay(10);
@@ -1256,7 +1256,7 @@ void ReplayAttackLoop() {
         sendSignal();
         lastDebounceTime = millis();
     }
-     if (pcf.digitalRead(BTN_DOWN) == LOW && millis() - lastDebounceTime > debounceDelay) {
+     if (digitalRead(BTN_DOWN) == LOW && millis() - lastDebounceTime > debounceDelay) {
          saveProfile();
          lastDebounceTime = millis();
     }
@@ -1591,10 +1591,10 @@ void saveSetup() {
     loadProfileCount();
     printProfiles();
 
-    pcf.pinMode(BTN_LEFT, INPUT_PULLUP);
-    pcf.pinMode(BTN_RIGHT, INPUT_PULLUP);
-    pcf.pinMode(BTN_DOWN, INPUT_PULLUP);
-    pcf.pinMode(BTN_UP, INPUT_PULLUP);
+    pinMode(BTN_LEFT, INPUT_PULLUP);
+    pinMode(BTN_RIGHT, INPUT_PULLUP);
+    pinMode(BTN_DOWN, INPUT_PULLUP);
+    pinMode(BTN_UP, INPUT_PULLUP);
 
     tft.setRotation(0);
     tft.fillScreen(TFT_BLACK);
@@ -1629,10 +1629,10 @@ void saveLoop() {
     static unsigned long lastDebounceTime = 0;
     const unsigned long debounceDelay = 200;
 
-    int btnLeftState = pcf.digitalRead(BTN_LEFT);
-    int btnRightState = pcf.digitalRead(BTN_RIGHT);
-    int btnSelectState = pcf.digitalRead(BTN_DOWN);
-    int btnUpState = pcf.digitalRead(BTN_UP);
+    int btnLeftState = digitalRead(BTN_LEFT);
+    int btnRightState = digitalRead(BTN_RIGHT);
+    int btnSelectState = digitalRead(BTN_DOWN);
+    int btnUpState = digitalRead(BTN_UP);
 
     if (profileCount > 0) {
         if (btnRightState == LOW && millis() - lastDebounceTime > debounceDelay) {
@@ -1976,7 +1976,7 @@ bool rmtNoiseBurst() {
 //         }
 //
 //         // Quick button check between bursts
-//         int btnUpState = pcf.digitalRead(BTN_UP);
+//         int btnUpState = digitalRead(BTN_UP);
 //         if (btnUpState == LOW) {
 //             // User pressed stop
 //             break;
@@ -2020,10 +2020,10 @@ void subjammerSetup() {
 
     randomSeed(analogRead(0));
 
-    pcf.pinMode(BTN_LEFT, INPUT_PULLUP);
-    pcf.pinMode(BTN_RIGHT, INPUT_PULLUP);
-    pcf.pinMode(BTN_DOWN, INPUT_PULLUP);
-    pcf.pinMode(BTN_UP, INPUT_PULLUP);
+    pinMode(BTN_LEFT, INPUT_PULLUP);
+    pinMode(BTN_RIGHT, INPUT_PULLUP);
+    pinMode(BTN_DOWN, INPUT_PULLUP);
+    pinMode(BTN_UP, INPUT_PULLUP);
     delay(100);
 
     tft.setRotation(0); 
@@ -2041,10 +2041,10 @@ void subjammerLoop() {
   
     runUI();
     
-    int btnLeftState = pcf.digitalRead(BTN_LEFT);
-    int btnRightState = pcf.digitalRead(BTN_RIGHT);
-    int btnUpState = pcf.digitalRead(BTN_UP);
-    int btnDownState = pcf.digitalRead(BTN_DOWN);
+    int btnLeftState = digitalRead(BTN_LEFT);
+    int btnRightState = digitalRead(BTN_RIGHT);
+    int btnUpState = digitalRead(BTN_UP);
+    int btnDownState = digitalRead(BTN_DOWN);
 
     if (btnUpState == LOW && millis() - lastDebounceTime > debounceDelay) {
         jammingRunning = !jammingRunning;
@@ -2523,7 +2523,7 @@ void transmitDeBruijnStream(const ProtocolDef& proto) {
     Serial.flush();
 
     int waitCount = 0;
-    while (pcf.digitalRead(BTN_UP) == LOW) {
+    while (digitalRead(BTN_UP) == LOW) {
         yield();
         delay(10);
         waitCount++;
@@ -2643,7 +2643,7 @@ void transmitDeBruijnStream(const ProtocolDef& proto) {
             yield();
 
             // Check for STOP button
-            if (pcf.digitalRead(BTN_UP) == LOW) {
+            if (digitalRead(BTN_UP) == LOW) {
                 Serial.println("[DEBUG] Stop button detected!");
                 Serial.flush();
                 bruteRunning = false;
@@ -2651,7 +2651,7 @@ void transmitDeBruijnStream(const ProtocolDef& proto) {
             }
 
             // Check for PAUSE button
-            if (pcf.digitalRead(BTN_DOWN) == LOW) {
+            if (digitalRead(BTN_DOWN) == LOW) {
                 Serial.println("[DEBUG] Pause button detected!");
                 Serial.flush();
                 brutePaused = true;
@@ -2662,11 +2662,11 @@ void transmitDeBruijnStream(const ProtocolDef& proto) {
                     yield();
                     updateBruteDisplay();
 
-                    if (pcf.digitalRead(BTN_DOWN) == LOW) {
+                    if (digitalRead(BTN_DOWN) == LOW) {
                         brutePaused = false;
                         delay(200);
                     }
-                    if (pcf.digitalRead(BTN_UP) == LOW) {
+                    if (digitalRead(BTN_UP) == LOW) {
                         bruteRunning = false;
                         brutePaused = false;
                     }
@@ -2748,7 +2748,7 @@ void runSequentialBrute(const ProtocolDef& proto) {
     Serial.flush();
 
     int waitCount = 0;
-    while (pcf.digitalRead(BTN_UP) == LOW) {
+    while (digitalRead(BTN_UP) == LOW) {
         yield();
         delay(10);
         waitCount++;
@@ -2831,14 +2831,14 @@ void runSequentialBrute(const ProtocolDef& proto) {
         if ((code & 0x0F) == 0) {
             yield();
 
-            if (pcf.digitalRead(BTN_UP) == LOW) {
+            if (digitalRead(BTN_UP) == LOW) {
                 Serial.println("[DEBUG-SEQ] Stop detected!");
                 Serial.flush();
                 bruteRunning = false;
                 break;
             }
 
-            if (pcf.digitalRead(BTN_DOWN) == LOW) {
+            if (digitalRead(BTN_DOWN) == LOW) {
                 brutePaused = !brutePaused;
                 delay(300);
             }
@@ -2852,11 +2852,11 @@ void runSequentialBrute(const ProtocolDef& proto) {
         // Pause handling
         while (brutePaused && bruteRunning) {
             yield();
-            if (pcf.digitalRead(BTN_DOWN) == LOW) {
+            if (digitalRead(BTN_DOWN) == LOW) {
                 brutePaused = false;
                 delay(300);
             }
-            if (pcf.digitalRead(BTN_UP) == LOW) {
+            if (digitalRead(BTN_UP) == LOW) {
                 bruteRunning = false;
             }
             updateBruteDisplay();
@@ -3199,10 +3199,10 @@ void subBruteSetup() {
 
     bruteSwitch.enableTransmit(RX_PIN);  // RX_PIN=16=GDO0 is TX data line
 
-    pcf.pinMode(BTN_LEFT, INPUT_PULLUP);
-    pcf.pinMode(BTN_RIGHT, INPUT_PULLUP);
-    pcf.pinMode(BTN_DOWN, INPUT_PULLUP);
-    pcf.pinMode(BTN_UP, INPUT_PULLUP);
+    pinMode(BTN_LEFT, INPUT_PULLUP);
+    pinMode(BTN_RIGHT, INPUT_PULLUP);
+    pinMode(BTN_DOWN, INPUT_PULLUP);
+    pinMode(BTN_UP, INPUT_PULLUP);
 
     tft.setRotation(0);
     tft.fillScreen(TFT_BLACK);
@@ -3229,7 +3229,7 @@ void subBruteLoop() {
 
     // Button controls when not attacking
     if (!bruteRunning) {
-        if (pcf.digitalRead(BTN_LEFT) == LOW && millis() - lastDebounceTime > debounceDelay) {
+        if (digitalRead(BTN_LEFT) == LOW && millis() - lastDebounceTime > debounceDelay) {
             currentProtocol = (currentProtocol - 1 + PROTO_COUNT) % PROTO_COUNT;
             ELECHOUSE_cc1101.setMHZ(protocols[currentProtocol].frequency / 1000000.0);
             drawHeader();
@@ -3237,7 +3237,7 @@ void subBruteLoop() {
             lastDebounceTime = millis();
         }
 
-        if (pcf.digitalRead(BTN_RIGHT) == LOW && millis() - lastDebounceTime > debounceDelay) {
+        if (digitalRead(BTN_RIGHT) == LOW && millis() - lastDebounceTime > debounceDelay) {
             currentProtocol = (currentProtocol + 1) % PROTO_COUNT;
             ELECHOUSE_cc1101.setMHZ(protocols[currentProtocol].frequency / 1000000.0);
             drawHeader();
@@ -3245,7 +3245,7 @@ void subBruteLoop() {
             lastDebounceTime = millis();
         }
 
-        if (pcf.digitalRead(BTN_UP) == LOW && millis() - lastDebounceTime > debounceDelay) {
+        if (digitalRead(BTN_UP) == LOW && millis() - lastDebounceTime > debounceDelay) {
             // Start attack
             startCode = 0;
             endCode = (1UL << protocols[currentProtocol].bitLength) - 1;
@@ -3268,7 +3268,7 @@ void subBruteLoop() {
             lastDebounceTime = millis();
         }
 
-        if (pcf.digitalRead(BTN_DOWN) == LOW && millis() - lastDebounceTime > debounceDelay) {
+        if (digitalRead(BTN_DOWN) == LOW && millis() - lastDebounceTime > debounceDelay) {
             useDeBruijn = !useDeBruijn;
             drawHeader();
             updateBruteDisplay();

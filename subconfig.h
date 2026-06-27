@@ -17,7 +17,6 @@
 #include <Wire.h>
 
 extern TFT_eSPI tft;
-extern PCF8574 pcf;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Radio Switching Support - Pin 16 shared between CC1101 GDO0 and NRF24 CE

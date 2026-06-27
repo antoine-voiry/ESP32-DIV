@@ -18,7 +18,6 @@ void cleanupSD();
 #include <XPT2046_Touchscreen.h>
 
 extern TFT_eSPI tft;
-extern PCF8574 pcf;
 
 #define XPT2046_IRQ   34
 #define XPT2046_MOSI  32

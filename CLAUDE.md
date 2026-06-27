@@ -59,7 +59,7 @@ You operate as a Senior Core Firmware Engineer. Your objective is absolute code 
 - **Absolute CLI Path:**
   `/Users/antoine/.vscode/extensions/thelastoutpostworkshop.arduino-maker-workshop-1.1.5-darwin-arm64/arduino_cli/darwin/arm64/arduino-cli`
 - **Command Build/Verify:**
-  `/Users/antoine/.vscode/extensions/thelastoutpostworkshop.arduino-maker-workshop-1.1.5-darwin-arm64/arduino_cli/darwin/arm64/arduino-cli compile --fqbn esp32:esp32:esp32 --board-options "FlashSize=16M,PartitionScheme=huge_app,CPUFreq=240,FlashMode=dio,FlashFreq=80,UploadSpeed=921600" --warnings default --build-property "compiler.c.elf.extra_flags=-Wl,-zmuldefs" --output-dir build .`
+  `/Users/antoine/.vscode/extensions/thelastoutpostworkshop.arduino-maker-workshop-1.1.5-darwin-arm64/arduino_cli/darwin/arm64/arduino-cli compile --fqbn esp32:esp32:esp32 --board-options "FlashSize=16M,PartitionScheme=huge_app,CPUFreq=240,FlashMode=dio,FlashFreq=80,UploadSpeed=921600" --warnings default --build-property "compiler.c.elf.extra_flags=-Wl,-zmuldefs" --build-property "build.extra_flags=-DESP32_DIV_V1_BOARD" --output-dir build .`
 - **Command Flash:**
   `/Users/antoine/.vscode/extensions/thelastoutpostworkshop.arduino-maker-workshop-1.1.5-darwin-arm64/arduino_cli/darwin/arm64/arduino-cli upload -p /dev/cu.usbserial-0001 --fqbn esp32:esp32:esp32 .`
 - **Command Monitor:**
