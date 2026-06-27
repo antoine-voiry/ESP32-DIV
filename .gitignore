@@ -41,3 +41,6 @@ design-report-*.md
 # Superpowers tooling
 skills-lock.json
 .markdownlint.json
+
+# Local-only docs (never commit)
+docs/
