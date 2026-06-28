@@ -4,6 +4,7 @@
 #include "Touchscreen.h"
 #include "driver/rmt.h"  // ESP32 RMT peripheral for hardware-timed OOK transmission
 #include <cstring>       // For memset()
+#include "webui.h"       // WebUIService::broadcastEvent() for Phone Remote WS events
 
 /*
  * ReplayAttack
@@ -1238,18 +1239,29 @@ void ReplayAttackLoop() {
         lastDebounceTime = millis();
     }
 
-    if (mySwitch.available()) { 
-        receivedValue = mySwitch.getReceivedValue(); 
-        receivedBitLength = mySwitch.getReceivedBitlength(); 
-        receivedProtocol = mySwitch.getReceivedProtocol(); 
+    if (mySwitch.available()) {
+        receivedValue = mySwitch.getReceivedValue();
+        receivedBitLength = mySwitch.getReceivedBitlength();
+        receivedProtocol = mySwitch.getReceivedProtocol();
 
         EEPROM.put(ADDR_VALUE, receivedValue);
         EEPROM.put(ADDR_BITLEN, receivedBitLength);
         EEPROM.put(ADDR_PROTO, receivedProtocol);
         EEPROM.commit();
-        
+
         updateDisplay();
-        mySwitch.resetAvailable(); 
+
+        // Broadcast capture event to WebUI Phone Remote if active
+        {
+            char buf[128];
+            snprintf(buf, sizeof(buf),
+                "{\"event\":\"subghz_capture\",\"value\":\"%lX\",\"protocol\":%d,\"bitlen\":%d,\"freq\":%lu}",
+                receivedValue, receivedProtocol, receivedBitLength,
+                (unsigned long)(ELECHOUSE_cc1101.getMHZ() * 1000000UL));
+            WebUIService::broadcastEvent(String(buf));
+        }
+
+        mySwitch.resetAvailable();
     }
 
      if (btnSelectState == LOW && receivedValue != 0 && millis() - lastDebounceTime > debounceDelay) {
