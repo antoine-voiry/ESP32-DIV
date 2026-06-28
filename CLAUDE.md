@@ -55,32 +55,26 @@ You operate as a Senior Core Firmware Engineer. Your objective is absolute code 
 
 ## 3. DIRECT ACTION SHORTCUTS
 
-**TOOLCHAIN:** Arduino Maker Workshop embedded CLI (NOT PlatformIO). Use absolute path below.
+**TOOLCHAIN:** PlatformIO 6.x (CLI: `platformio` or `pio`).
 
-- **Absolute CLI Path:**
-  `/Users/antoine/.vscode/extensions/thelastoutpostworkshop.arduino-maker-workshop-1.1.5-darwin-arm64/arduino_cli/darwin/arm64/arduino-cli`
-- **Command Build/Verify:**
-  `/Users/antoine/.vscode/extensions/thelastoutpostworkshop.arduino-maker-workshop-1.1.5-darwin-arm64/arduino_cli/darwin/arm64/arduino-cli compile --fqbn esp32:esp32:esp32 --board-options "FlashSize=16M,PartitionScheme=huge_app,CPUFreq=240,FlashMode=dio,FlashFreq=80,UploadSpeed=921600" --warnings default --build-property "compiler.c.elf.extra_flags=-Wl,-zmuldefs" --output-dir build .`
-  > Do **NOT** pass `-DESP32_DIV_V1_BOARD`: that macro gates out `<PCF8574.h>` and the button abstraction. The buttons require the PCF8574, so the macro must stay undefined.
-- **Command Flash:**
-  `/Users/antoine/.vscode/extensions/thelastoutpostworkshop.arduino-maker-workshop-1.1.5-darwin-arm64/arduino_cli/darwin/arm64/arduino-cli upload -p /dev/cu.usbserial-0001 --fqbn esp32:esp32:esp32 .`
-- **Command Monitor:**
-  `/Users/antoine/.vscode/extensions/thelastoutpostworkshop.arduino-maker-workshop-1.1.5-darwin-arm64/arduino_cli/darwin/arm64/arduino-cli monitor -p /dev/cu.usbserial-0001 --config baudrate=115200`
-- **Install Libraries:**
-  `/Users/antoine/.vscode/extensions/thelastoutpostworkshop.arduino-maker-workshop-1.1.5-darwin-arm64/arduino_cli/darwin/arm64/arduino-cli lib install "LibraryName"`
-- **Context Management:** Never index binary cache footprints in `build/` or `.pio/`. Forbidden: PlatformIO (`pio` commands, `platformio.ini`).
+- **Build/Verify:**
+  `platformio run`
+- **Flash:**
+  `platformio run --target upload`
+- **Monitor:**
+  `platformio device monitor`
+- **Install/update deps:** Edit `lib_deps` in `platformio.ini` — PlatformIO resolves on next build.
 - **Skill Trigger:** Run `/build-verify` after any compile attempt — three personas review output.
+
+> Library versions are pinned in `platformio.ini` `lib_deps`. Do NOT run `pio update` without verifying version compatibility first.
 
 ---
 
 ## 3.1 VS CODE TASK INTEGRATION
 
-- **Preferred Build Execution:** Press `Cmd + Shift + B` to trigger the native VS Code build task ("Compile ESP32-DIV V1") instead of executing raw shell commands directly.
-- **Error Tracking:** The `.vscode/tasks.json` configuration maps dual regex Problem Matchers:
-  - Standard GCC/G++ compilation errors/warnings (`file:line:col: error/warning: message`)
-  - Linker errors (`undefined reference`, `multiple definition`)
-- **Problems Panel:** All compiler errors automatically populate the VS Code **Problems** panel (Cmd+Shift+M). Click any error to navigate to the exact line and column.
+- **Preferred Build Execution:** Press `Cmd + Shift + B` to trigger the PlatformIO build task via `.vscode/tasks.json`.
 - **Additional Tasks:** Flash (upload) and Monitor (serial) are also available via the Command Palette (Cmd+Shift+P > "Tasks: Run Task").
+- **Problems Panel:** Compiler errors automatically populate the VS Code **Problems** panel (Cmd+Shift+M) for quick navigation to error locations.
 
 ---
 
@@ -93,19 +87,17 @@ You operate as a Senior Core Firmware Engineer. Your objective is absolute code 
 - ❌ Modifying pin definitions in touch/button reads — pinout is hardware-locked (PCF8574 channels 6,3,4,5,7 for buttons; GPIO 25,32,35,33,34 for XPT2046).
 - ❌ Using `ESP32-S3` registers, hardware USB-OTG, or S3 vector optimizations — target is `ESP32-WROOM-32` (dual-core, no S3 silicon).
 - ❌ Altering `User_Setup.h` or TFT SPI definitions — they are baseline-locked.
-- ❌ Omitting `--build-property "compiler.c.elf.extra_flags=-Wl,-zmuldefs"` from the compile command — the ESP32 Arduino core 2.0.17 SDK `libnet80211.a` has a duplicate symbol (`ieee80211_raw_frame_sanity_check`) that collides with `wifi.cpp`. This flag is a **mandatory linker workaround** for this core version; removing it causes a link-time `multiple definition` error.
+- ❌ Omitting the `-Wl,-zmuldefs` linker flag from the build — the ESP32 Arduino core 2.0.17 SDK `libnet80211.a` has a duplicate symbol (`ieee80211_raw_frame_sanity_check`) that collides with `wifi.cpp`. This flag is **mandatory** in `platformio.ini` `build_flags`; removing it causes a link-time `multiple definition` error.
 
 ---
 
 ## 5. REQUIRED LIBRARY DEPENDENCIES
 
-**Install all required libraries via Arduino Maker Workshop CLI before building:**
+**Library dependencies are managed via `platformio.ini` `lib_deps`.**
 
-```bash
-/Users/antoine/.vscode/extensions/thelastoutpostworkshop.arduino-maker-workshop-1.1.5-darwin-arm64/arduino_cli/darwin/arm64/arduino-cli lib install "TFT_eSPI" "XPT2046_Touchscreen" "RF24" "SmartRC-CC1101-Driver-Lib" "rc-switch" "PCF8574" "arduinoFFT"
-```
+PlatformIO automatically resolves and installs all required libraries on the next build.
 
-**Complete library list (installed versions):**
+**Complete library list (pinned versions):**
 
 - **TFT_eSPI** (2.5.43) — Display rendering for ILI9341
 - **XPT2046_Touchscreen** (1.4.0) — Touchscreen SPI driver
