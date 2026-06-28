@@ -3,6 +3,9 @@
 #include "icon.h"
 #include "Touchscreen.h"
 #include <WiFi.h>  // For WiFi.RSSI() and WiFi.status()
+#include "hal/hal_globals.h"
+#include "hal/IADC.h"
+#include "battery_logic.h"
 
 
 /*
@@ -137,38 +140,32 @@ const int STATUS_BAR_UPDATE_INTERVAL = 1000;
 float lastBatteryVoltage = 0.0;
 
 float readBatteryVoltage() {
-  static bool adcInitialized = false;
-  static unsigned long lastDebugPrint = 0;
-
-  // Initialize ADC attenuation on first call (11dB for 0-3.3V range)
-  if (!adcInitialized) {
-    analogSetPinAttenuation(36, ADC_11db);
-    adcInitialized = true;
-    Serial.println("[BATTERY] ADC initialized on GPIO36 with 11dB attenuation");
-  }
-
-  const int sampleCount = 16;  // More samples for better accuracy
-  uint32_t sum = 0;
-
-  for (int i = 0; i < sampleCount; i++) {
-    sum += analogReadMilliVolts(36);  // Use calibrated millivolt reading
-    delayMicroseconds(500);  // Faster sampling
-  }
-
-  float avgMv = (float)sum / sampleCount;
-  // Voltage divider ratio is 2:1, so multiply by 2 to get actual battery voltage
-  float voltage = (avgMv / 1000.0) * 2.0;
-
-  // DEBUG: Print battery info every 5 seconds to help diagnose issues
-  if (millis() - lastDebugPrint > 5000) {
-    Serial.printf("[BATTERY] Raw mV: %.1f, Voltage: %.2fV, Expected range: 3.0-4.2V\n", avgMv, voltage);
-    if (avgMv < 100) {
-      Serial.println("[BATTERY] WARNING: Very low reading - check GPIO36 wiring to battery divider!");
+    static bool adcInitialized = false;
+    if (!adcInitialized) {
+        gADC->setAttenuation(36, 3);  // 3 == ADC_11db
+        adcInitialized = true;
+        Serial.println("[BATTERY] ADC initialized on GPIO36 with 11dB attenuation");
     }
-    lastDebugPrint = millis();
-  }
 
-  return voltage;
+    const int sampleCount = 16;
+    uint32_t sum = 0;
+    for (int i = 0; i < sampleCount; i++) {
+        sum += gADC->readMillivolts(36);
+        delayMicroseconds(500);
+    }
+
+    float avgMv = (float)sum / sampleCount;
+    float voltage = computeVoltage((uint32_t)avgMv);
+
+    static unsigned long lastDebugPrint = 0;
+    if (millis() - lastDebugPrint > 5000) {
+        Serial.printf("[BATTERY] Raw mV: %.1f, Voltage: %.2fV\n", avgMv, voltage);
+        if (avgMv < 100) {
+            Serial.println("[BATTERY] WARNING: check GPIO36 wiring!");
+        }
+        lastDebugPrint = millis();
+    }
+    return voltage;
 }
 
 float readInternalTemperature() {
@@ -185,16 +182,15 @@ void drawStatusBar(float batteryVoltage, bool forceUpdate) {
   static int lastBatteryPercentage = -1;
   static int lastWiFiStrength = -1;
 
-  int batteryPercentage = map(batteryVoltage * 100, 300, 420, 0, 100);
-  batteryPercentage = constrain(batteryPercentage, 0, 100);
+    int batteryPercentage = computeBatteryPercent(batteryVoltage);
 
-  int wifiStrength = 0;
-  wifi_mode_t wifiMode = WiFi.getMode();
-  if (WiFi.status() == WL_CONNECTED) {
-    wifiStrength = constrain(map(WiFi.RSSI(), -100, -30, 0, 100), 0, 100);
-  } else if (wifiMode == WIFI_AP || wifiMode == WIFI_AP_STA) {
-    wifiStrength = 100;
-  }
+    int wifiStrength = 0;
+    wifi_mode_t wifiMode = WiFi.getMode();
+    if (WiFi.status() == WL_CONNECTED) {
+        wifiStrength = computeWifiStrength(WiFi.RSSI());
+    } else if (wifiMode == WIFI_AP || wifiMode == WIFI_AP_STA) {
+        wifiStrength = 100;
+    }
 
   float internalTemp = readInternalTemperature();
   bool sdAvailable = false;
