@@ -438,6 +438,14 @@ void ptmLoop() {
 
   pkts[127] = tmpPacketCounter;
 
+  if (WebUIService::isActive()) {
+    char buf[96];
+    snprintf(buf, sizeof(buf),
+      "{\"event\":\"packet_count\",\"count\":%lu,\"channel\":%u,\"deauths\":%lu}",
+      tmpPacketCounter, ch, deauths);
+    WebUIService::broadcastEvent(String(buf));
+  }
+
   tmpPacketCounter = 0;
   deauths = 0;
   rssiSum = 0;
@@ -1512,6 +1520,19 @@ void startWiFiScan() {
 
   isScanning = false;
   displayWiFiList(true);
+
+  if (WebUIService::isActive()) {
+    String json = "{\"event\":\"wifi_scan_result\",\"networks\":[";
+    int n = WiFi.scanComplete();
+    for (int i = 0; i < n && i < 20; i++) {
+      if (i > 0) json += ",";
+      json += "{\"ssid\":\"" + WiFi.SSID(i) + "\",\"rssi\":" +
+              String(WiFi.RSSI(i)) + ",\"bssid\":\"" +
+              WiFi.BSSIDstr(i) + "\"}";
+    }
+    json += "]}";
+    WebUIService::broadcastEvent(json);
+  }
 }
 
 void displayWiFiDetails() {
