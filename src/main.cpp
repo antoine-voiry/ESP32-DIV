@@ -16,6 +16,14 @@
 #include "icon.h"
 #include "skull_bg.h"
 
+#include "hal/hal_globals.h"
+#include "hal/TftDisplay.h"
+#include "hal/Esp32ADC.h"
+#include "hal/Esp32Eeprom.h"
+#include "hal/SdStorage.h"
+#include "hal/CC1101Radio.h"
+#include "hal/Nrf24Radio.h"
+
 TFT_eSPI tft = TFT_eSPI();
 
 #define pcf_ADDR 0x20
@@ -3183,7 +3191,27 @@ void handleButtons() {
 }
 
 
+namespace BleJammer { extern RF24 radio1; extern RF24 radio2; extern RF24 radio3; }
+
+static TftDisplay  halDisplay(tft);
+static Esp32ADC    halADC;
+static Esp32Eeprom halEeprom;
+static SdStorage   halStorage;
+static CC1101Radio halSubGhz;
+static Nrf24Radio  halNrf1(BleJammer::radio1);
+static Nrf24Radio  halNrf2(BleJammer::radio2);
+static Nrf24Radio  halNrf3(BleJammer::radio3);
+
 void setup() {
+    gDisplay = &halDisplay;
+    gADC     = &halADC;
+    gEeprom  = &halEeprom;
+    gStorage = &halStorage;
+    gSubGhz  = &halSubGhz;
+    gNrf1    = &halNrf1;
+    gNrf2    = &halNrf2;
+    gNrf3    = &halNrf3;
+
   Serial.begin(115200);
 
   EEPROM.begin(EEPROM_TOTAL_SIZE);
