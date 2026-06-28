@@ -36,6 +36,18 @@ static volatile int8_t pendingCat  = -1;
 static volatile int8_t pendingItem = -1;
 static volatile bool   pendingStop = false;
 
+// Pending /fs and /dl requests — set in AsyncTCP lambda (Core 0), drained in loop() (Core 1).
+// SD SPI bus must only be accessed from Core 1.
+static volatile bool   pendingFsList = false;
+static volatile bool   pendingDlFile = false;
+static char            pendingFsPath[128] = {};
+static char            pendingDlPath[128] = {};
+static AsyncWebServerRequest* pendingFsReq = nullptr;
+static AsyncWebServerRequest* pendingDlReq = nullptr;
+
+// Tool name emitted in going_offline — set by runTool() before teardown().
+static char pendingOfflineTool[32] = {};
+
 // ─── JSON helpers (no ArduinoJson dependency) ──────────────────────────────
 
 static String jsonStr(const String& json, const char* key) {
@@ -97,7 +109,6 @@ static void runTool(int8_t cat, int8_t item) {
     submenu_initialized = false;
 
     // Emit tool_started
-    String catNames[] = {"WiFi","BLE","2.4GHz","SubGHz","IR","Tools","Settings","Files"};
     String itemNames[][6] = {
         {"Packet Monitor","Beacon Spammer","WiFi Deauther","Deauth Detector","WiFi Scanner","Captive Portal"},
         {"BLE Jammer","BLE Spoofer","Sour Apple","Sniffer","BLE Scanner",""},
@@ -113,6 +124,10 @@ static void runTool(int8_t cat, int8_t item) {
     // WiFi tools seize the radio — teardown WebUI before *Setup() so the guard
     // inside each *Setup() sees isActive()==false and doesn't double-fire.
     if (cat == 0 && active) {
+        // Record tool name for going_offline event
+        static const char* const catNames[] = {"wifi","ble","rf24","subghz","ir","tools","settings","files"};
+        snprintf(pendingOfflineTool, sizeof(pendingOfflineTool),
+                 "%s_%d", catNames[cat < 8 ? cat : 0], item);
         teardown();
         delay(100);
     }
@@ -196,32 +211,20 @@ void setup() {
 
     server.on("/fs", HTTP_GET, [](AsyncWebServerRequest* req) {
         if (!req->hasParam("path")) { req->send(400, "text/plain", "missing path"); return; }
-        String path = req->getParam("path")->value();
-        File dir = SD.open(path);
-        if (!dir) { req->send(404, "text/plain", "not a directory"); return; }
-        if (!dir.isDirectory()) { dir.close(); req->send(404, "text/plain", "not a directory"); return; }
-        String json = "{\"event\":\"fs_listing\",\"path\":\"" + path + "\",\"files\":[";
-        bool first = true;
-        File entry = dir.openNextFile();
-        while (entry) {
-            if (!entry.isDirectory()) {
-                if (!first) json += ",";
-                json += "{\"name\":\"" + String(entry.name()) + "\",\"size\":" + String(entry.size()) + "}";
-                first = false;
-            }
-            entry.close();
-            entry = dir.openNextFile();
-        }
-        dir.close();
-        json += "]}";
-        req->send(200, "application/json", json);
+        if (pendingFsList || pendingFsReq) { req->send(503, "text/plain", "busy"); return; }
+        strncpy(pendingFsPath, req->getParam("path")->value().c_str(), sizeof(pendingFsPath) - 1);
+        pendingFsPath[sizeof(pendingFsPath) - 1] = '\0';
+        pendingFsReq  = req;
+        pendingFsList = true;
     });
 
     server.on("/dl", HTTP_GET, [](AsyncWebServerRequest* req) {
         if (!req->hasParam("path")) { req->send(400, "text/plain", "missing path"); return; }
-        String path = req->getParam("path")->value();
-        if (!SD.exists(path)) { req->send(404, "text/plain", "file not found"); return; }
-        req->send(SD, path, "application/octet-stream", true);
+        if (pendingDlFile || pendingDlReq) { req->send(503, "text/plain", "busy"); return; }
+        strncpy(pendingDlPath, req->getParam("path")->value().c_str(), sizeof(pendingDlPath) - 1);
+        pendingDlPath[sizeof(pendingDlPath) - 1] = '\0';
+        pendingDlReq  = req;
+        pendingDlFile = true;
     });
 
     server.on("/config", HTTP_GET, [](AsyncWebServerRequest* req) {
@@ -303,6 +306,59 @@ void loop() {
         runTool(cat, item);
     }
 
+    // Drain /fs pending request (SD I/O on Core 1 — SPI bus safe)
+    if (pendingFsList && pendingFsReq) {
+        AsyncWebServerRequest* req = pendingFsReq;
+        pendingFsReq  = nullptr;
+        pendingFsList = false;
+        String path = String(pendingFsPath);
+        // Restrict to safe roots only
+        if (!path.startsWith("/loot") && !path.startsWith("/captures") && path != "/") {
+            req->send(403, "text/plain", "forbidden");
+        } else {
+            File dir = SD.open(path);
+            if (!dir) {
+                req->send(404, "text/plain", "not found");
+            } else if (!dir.isDirectory()) {
+                dir.close();
+                req->send(404, "text/plain", "not a directory");
+            } else {
+                String json = "{\"event\":\"fs_listing\",\"path\":\"" + path + "\",\"files\":[";
+                bool first = true;
+                File entry = dir.openNextFile();
+                while (entry) {
+                    if (!entry.isDirectory()) {
+                        String name = String(entry.name());
+                        name.replace("\\", "\\\\"); name.replace("\"", "\\\"");
+                        if (!first) json += ",";
+                        json += "{\"name\":\"" + name + "\",\"size\":" + String(entry.size()) + "}";
+                        first = false;
+                    }
+                    entry.close();
+                    entry = dir.openNextFile();
+                }
+                dir.close();
+                json += "]}";
+                req->send(200, "application/json", json);
+            }
+        }
+    }
+
+    // Drain /dl pending request (SD I/O on Core 1 — SPI bus safe)
+    if (pendingDlFile && pendingDlReq) {
+        AsyncWebServerRequest* req = pendingDlReq;
+        pendingDlReq  = nullptr;
+        pendingDlFile = false;
+        String path = String(pendingDlPath);
+        if (!path.startsWith("/loot") && !path.startsWith("/captures")) {
+            req->send(403, "text/plain", "forbidden");
+        } else if (!SD.exists(path)) {
+            req->send(404, "text/plain", "file not found");
+        } else {
+            req->send(SD, path, "application/octet-stream", true);
+        }
+    }
+
     // Periodic WS client cleanup
     unsigned long now = millis();
     if (now - lastCleanup > 5000) {
@@ -313,7 +369,12 @@ void loop() {
 
 void teardown() {
     if (!active) return;
-    ws.textAll("{\"event\":\"going_offline\",\"reason\":\"radio_conflict\"}");
+    char msg[128];
+    snprintf(msg, sizeof(msg),
+             "{\"event\":\"going_offline\",\"reason\":\"radio_conflict\",\"tool\":\"%s\"}",
+             pendingOfflineTool[0] ? pendingOfflineTool : "unknown");
+    ws.textAll(msg);
+    pendingOfflineTool[0] = '\0';
     delay(80);
     ws.closeAll();
     server.end();
