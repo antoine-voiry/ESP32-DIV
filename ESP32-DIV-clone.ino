@@ -11,6 +11,7 @@
 #include "subconfig.h"
 #include "utils.h"
 #include "shared.h"
+#include "webui.h"
 #include "eeprom_layout.h"
 #include "icon.h"
 #include "skull_bg.h"
@@ -99,12 +100,13 @@ const char *tools_submenu_items[tools_NUM_SUBMENU_ITEMS] = {
     "Back to Main Menu"};
 
 
-const int settings_NUM_SUBMENU_ITEMS = 5;
+const int settings_NUM_SUBMENU_ITEMS = 6;
 const char *settings_submenu_items[settings_NUM_SUBMENU_ITEMS] = {
     "Brightness",
     "Screen Timeout",
     "Device Info",
     "Display Theme",
+    "Phone Remote",
     "Back to Main Menu"};
 
 
@@ -172,7 +174,8 @@ const unsigned char *settings_submenu_icons[settings_NUM_SUBMENU_ITEMS] = {
     bitmap_icon_eye2,     // Screen Timeout
     bitmap_icon_stat,     // Device Info
     bitmap_icon_eye2,     // Display Theme  (reuses eye icon)
-    bitmap_icon_go_back
+    bitmap_icon_follow,   // Phone Remote
+    bitmap_icon_go_back   // Back
 };
 
 const unsigned char *ir_submenu_icons[ir_NUM_SUBMENU_ITEMS] = {
@@ -2238,6 +2241,78 @@ void displayDeviceInfo() {
     }
 }
 
+void webUIPhoneRemoteScreen() {
+    tft.fillScreen(TFT_BLACK);
+    tft.setTextSize(1);
+    tft.setTextColor(HALEHOUND_HOTPINK, TFT_BLACK);
+    tft.setCursor(40, 10);
+    tft.print("PHONE REMOTE");
+
+    auto redraw = [&]() {
+        tft.fillRect(0, 35, 240, 240, TFT_BLACK);
+        tft.setTextColor(SHREDDY_TEAL, TFT_BLACK);
+        int y = 50;
+
+        // Mode
+        Preferences prefs; prefs.begin("webui", true);
+        uint8_t mode = prefs.getUChar("mode", 0);
+        String apSSID = prefs.getString("ap_ssid", "DIV-Remote");
+        prefs.end();
+        tft.setCursor(10, y); tft.print("Mode: "); tft.print(mode == 0 ? "AP" : "STA");
+        y += 25;
+        tft.setCursor(10, y); tft.print("SSID: "); tft.print(apSSID);
+        y += 25;
+
+        if (WebUIService::isActive()) {
+            String ip = (WiFi.getMode() == WIFI_AP) ? WiFi.softAPIP().toString() : WiFi.localIP().toString();
+            tft.setTextColor(HALEHOUND_GREEN, TFT_BLACK);
+            tft.setCursor(10, y); tft.print("IP: "); tft.print(ip);
+        } else {
+            tft.setTextColor(GRAY, TFT_BLACK);
+            tft.setCursor(10, y); tft.print("Server: stopped");
+        }
+        y += 30;
+
+        // Action buttons
+        tft.setTextColor(WHITE, TFT_BLACK);
+        tft.setCursor(10, y); tft.print("[UP]   Start Server");   y += 30;
+        tft.setCursor(10, y); tft.print("[DOWN] Stop Server");    y += 30;
+        tft.setCursor(10, y); tft.print("[LEFT] Toggle AP/STA");  y += 30;
+        tft.setCursor(10, y); tft.print("[SEL]  Back");
+    };
+
+    redraw();
+    drawStatusBar(currentBatteryVoltage, true);
+
+    feature_exit_requested = false;
+    while (!feature_exit_requested) {
+        if (isButtonPressed(BTN_UP)) {
+            if (!WebUIService::isActive()) WebUIService::setup();
+            redraw();
+            delay(300);
+        }
+        if (isButtonPressed(BTN_DOWN)) {
+            if (WebUIService::isActive()) WebUIService::teardown();
+            redraw();
+            delay(300);
+        }
+        if (isButtonPressed(BTN_LEFT)) {
+            Preferences prefs; prefs.begin("webui", false);
+            uint8_t cur = prefs.getUChar("mode", 0);
+            prefs.putUChar("mode", cur == 0 ? 1 : 0);
+            prefs.end();
+            redraw();
+            delay(300);
+        }
+        if (isButtonPressed(BTN_SELECT)) {
+            feature_exit_requested = true;
+            delay(200);
+            break;
+        }
+        delay(50);
+    }
+}
+
 void handleSettingsSubmenuButtons() {
     if (isButtonPressed(BTN_UP)) {
         current_submenu_index = (current_submenu_index - 1 + active_submenu_size) % active_submenu_size;
@@ -2264,7 +2339,7 @@ void handleSettingsSubmenuButtons() {
         delay(200);
 
         // Back to Main Menu
-        if (current_submenu_index == 4) {
+        if (current_submenu_index == 5) {
             in_sub_menu = false;
             feature_active = false;
             feature_exit_requested = false;
@@ -2327,6 +2402,20 @@ void handleSettingsSubmenuButtons() {
             displaySubmenu();
             delay(200);
         }
+
+        // Phone Remote
+        if (current_submenu_index == 4) {
+            feature_active = true;
+            feature_exit_requested = false;
+            webUIPhoneRemoteScreen();
+            in_sub_menu = true;
+            is_main_menu = false;
+            submenu_initialized = false;
+            feature_active = false;
+            feature_exit_requested = false;
+            displaySubmenu();
+            delay(200);
+        }
     }
 
     // Touch handler for Settings menu
@@ -2352,7 +2441,7 @@ void handleSettingsSubmenuButtons() {
                 displaySubmenu();
                 delay(200);
 
-                if (current_submenu_index == 4) {
+                if (current_submenu_index == 5) {
                     // Touch: Back to Main Menu
                     in_sub_menu = false;
                     feature_active = false;
@@ -2400,6 +2489,18 @@ void handleSettingsSubmenuButtons() {
                     feature_active = true;
                     feature_exit_requested = false;
                     themeToggleLoop();
+                    in_sub_menu = true;
+                    is_main_menu = false;
+                    submenu_initialized = false;
+                    feature_active = false;
+                    feature_exit_requested = false;
+                    displaySubmenu();
+                    delay(200);
+                } else if (current_submenu_index == 4) {
+                    // Touch: Phone Remote
+                    feature_active = true;
+                    feature_exit_requested = false;
+                    webUIPhoneRemoteScreen();
                     in_sub_menu = true;
                     is_main_menu = false;
                     submenu_initialized = false;
