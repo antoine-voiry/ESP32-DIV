@@ -1365,6 +1365,9 @@ void updateBLEList() {
     for (int i = 0; i < deviceCount && i < 20; i++) {
       BLEAdvertisedDevice dev = bleResults.getDevice(i);
       String devName = dev.getName().length() > 0 ? dev.getName().c_str() : "Unknown Device";
+      // Escape for JSON
+      devName.replace("\\", "\\\\");
+      devName.replace("\"", "\\\"");
       int devRssi = dev.getRSSI();
       String devAddr = dev.getAddress().toString().c_str();
       if (!first) json += ",";
