@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 // ── Theme control ──────────────────────────────────────────────────────────
-enum ThemeID : uint8_t { THEME_DARK = 0, THEME_LIGHT = 1 };
+#include "theme_types.h"
 
 void applyTheme(ThemeID id);
 ThemeID loadThemeFromEEPROM();
