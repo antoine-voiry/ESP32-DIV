@@ -12,10 +12,8 @@
 .claude/
 .claude/settings.json
 .claude/settings.local.json
-.vscode/
+.vscode/arduino.json
 .idea/
-platform.ini
-platformio.ini
 build.sh
 
 # PlatformIO
@@ -42,5 +40,3 @@ design-report-*.md
 skills-lock.json
 .markdownlint.json
 
-# Local-only docs (never commit)
-docs/
