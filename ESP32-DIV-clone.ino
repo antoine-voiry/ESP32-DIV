@@ -3226,7 +3226,8 @@ void setup() {
 }
 
 void loop() {
-  handleButtons();      
-  //manageBacklight();     
-  updateStatusBar(); 
+  handleButtons();
+  //manageBacklight();
+  updateStatusBar();
+  WebUIService::loop();
 }
