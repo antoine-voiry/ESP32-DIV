@@ -5,6 +5,7 @@
 #include <AsyncTCP.h>
 #include <WiFi.h>
 #include <Preferences.h>
+#include <SD.h>
 
 // Forward declarations — avoid circular includes with wificonfig.h/bleconfig.h/subconfig.h
 extern bool feature_exit_requested;
@@ -191,6 +192,35 @@ void setup() {
         resp->addHeader("Content-Encoding", "gzip");
         resp->addHeader("Cache-Control", "max-age=3600");
         req->send(resp);
+    });
+
+    server.on("/fs", HTTP_GET, [](AsyncWebServerRequest* req) {
+        if (!req->hasParam("path")) { req->send(400, "text/plain", "missing path"); return; }
+        String path = req->getParam("path")->value();
+        File dir = SD.open(path);
+        if (!dir || !dir.isDirectory()) { req->send(404, "text/plain", "not a directory"); return; }
+        String json = "{\"event\":\"fs_listing\",\"path\":\"" + path + "\",\"files\":[";
+        bool first = true;
+        File entry = dir.openNextFile();
+        while (entry) {
+            if (!entry.isDirectory()) {
+                if (!first) json += ",";
+                json += "{\"name\":\"" + String(entry.name()) + "\",\"size\":" + String(entry.size()) + "}";
+                first = false;
+            }
+            entry.close();
+            entry = dir.openNextFile();
+        }
+        dir.close();
+        json += "]}";
+        req->send(200, "application/json", json);
+    });
+
+    server.on("/dl", HTTP_GET, [](AsyncWebServerRequest* req) {
+        if (!req->hasParam("path")) { req->send(400, "text/plain", "missing path"); return; }
+        String path = req->getParam("path")->value();
+        if (!SD.exists(path)) { req->send(404, "text/plain", "file not found"); return; }
+        req->send(SD, path, "application/octet-stream", true);
     });
 
     server.onNotFound([](AsyncWebServerRequest* req) {
