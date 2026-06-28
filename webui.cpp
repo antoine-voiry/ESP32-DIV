@@ -198,7 +198,8 @@ void setup() {
         if (!req->hasParam("path")) { req->send(400, "text/plain", "missing path"); return; }
         String path = req->getParam("path")->value();
         File dir = SD.open(path);
-        if (!dir || !dir.isDirectory()) { req->send(404, "text/plain", "not a directory"); return; }
+        if (!dir) { req->send(404, "text/plain", "not a directory"); return; }
+        if (!dir.isDirectory()) { dir.close(); req->send(404, "text/plain", "not a directory"); return; }
         String json = "{\"event\":\"fs_listing\",\"path\":\"" + path + "\",\"files\":[";
         bool first = true;
         File entry = dir.openNextFile();
