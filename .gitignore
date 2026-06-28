@@ -15,7 +15,6 @@
 .vscode/
 .idea/
 platform.ini
-platformio.ini
 build.sh
 
 # PlatformIO
