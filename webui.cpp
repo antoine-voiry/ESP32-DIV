@@ -224,6 +224,52 @@ void setup() {
         req->send(SD, path, "application/octet-stream", true);
     });
 
+    server.on("/config", HTTP_GET, [](AsyncWebServerRequest* req) {
+        Preferences p; p.begin("webui", true);
+        String ssid = p.getString("sta_ssid", "");
+        uint8_t mode = p.getUChar("mode", 0);
+        p.end();
+        String html =
+            "<!DOCTYPE html><html><head><meta charset=UTF-8>"
+            "<meta name=viewport content='width=device-width,initial-scale=1'>"
+            "<style>body{background:#000;color:#fff;font-family:sans-serif;padding:20px}"
+            "input,select{width:100%;padding:12px;margin:8px 0 16px;background:#1c1c1c;"
+            "color:#fff;border:1px solid #333;border-radius:8px;font-size:15px}"
+            "button{width:100%;padding:14px;background:#ff03ff;color:#000;border:none;"
+            "border-radius:8px;font-size:16px;font-weight:700;cursor:pointer}</style></head>"
+            "<body><h2 style='color:#ff03ff;margin-bottom:20px'>DIV-Remote Config</h2>"
+            "<form method=POST action=/config>"
+            "<label>Mode</label>"
+            "<select name=mode>"
+            "<option value=0" + String(mode==0?" selected":"") + ">AP (DIV-Remote hotspot)</option>"
+            "<option value=1" + String(mode==1?" selected":"") + ">STA (join existing WiFi)</option>"
+            "</select>"
+            "<label>STA SSID</label>"
+            "<input name=sta_ssid value='" + ssid + "' placeholder='Your WiFi network'>"
+            "<label>STA Password</label>"
+            "<input name=sta_pass type=password placeholder='Leave blank to keep current'>"
+            "<button type=submit>Save &amp; Restart Server</button>"
+            "</form></body></html>";
+        req->send(200, "text/html", html);
+    });
+
+    server.on("/config", HTTP_POST, [](AsyncWebServerRequest* req) {
+        Preferences p; p.begin("webui", false);
+        if (req->hasParam("mode", true))
+            p.putUChar("mode", (uint8_t)req->getParam("mode", true)->value().toInt());
+        if (req->hasParam("sta_ssid", true))
+            p.putString("sta_ssid", req->getParam("sta_ssid", true)->value());
+        if (req->hasParam("sta_pass", true)) {
+            String pass = req->getParam("sta_pass", true)->value();
+            if (pass.length() > 0) p.putString("sta_pass", pass);
+        }
+        p.end();
+        req->send(200, "text/html",
+            "<!DOCTYPE html><html><body style='background:#000;color:#0f8;font-family:sans-serif;padding:20px'>"
+            "<h2>Saved!</h2><p>Stop and restart the server from the TFT Settings menu to apply changes.</p>"
+            "</body></html>");
+    });
+
     server.onNotFound([](AsyncWebServerRequest* req) {
         req->send(404, "text/plain", "Not found");
     });
