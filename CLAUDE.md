@@ -104,8 +104,8 @@ PlatformIO automatically resolves and installs all required libraries on the nex
 - **RF24** (1.6.1) — nRF24L01+ wireless 2.4GHz transceiver
 - **SmartRC-CC1101-Driver-Lib** (3.0.2) — CC1101 Sub-GHz transceiver driver (provides ELECHOUSE_CC1101_SRC_DRV.h)
 - **rc-switch** (2.6.4) — 433/315MHz RF remote control protocol encoding/decoding
-- **PCF8574** (0.4.5) — I2C GPIO expander (**REQUIRED for V1: drives the navigation buttons at 0x20 on SDA=21/SCL=22**)
-- **arduinoFFT** (2.0.4) — Fast Fourier Transform for spectrum analysis
+- **PCF8574** (2.3.7) — I2C GPIO expander (**REQUIRED for V1: drives the navigation buttons at 0x20 on SDA=21/SCL=22**) — PlatformIO registry publishes 2.x; API identical to 0.4.x
+- **arduinoFFT** (1.6.2) — Fast Fourier Transform for spectrum analysis — pinned to 1.x; arduinoFFT 2.x renamed the class to `ArduinoFFT<T>` breaking this codebase
 
 **⚠️ CC1101 Compatibility Note:**
 The codebase includes `<ELECHOUSE_CC1101_ESP32DIV.h>` which is provided by a compatibility wrapper in the project root ([ELECHOUSE_CC1101_ESP32DIV.h](ELECHOUSE_CC1101_ESP32DIV.h)). This wrapper redirects to SmartRC-CC1101-Driver-Lib's `ELECHOUSE_CC1101_SRC_DRV.h`, maintaining backward compatibility with legacy code while using the modern, registry-available library.
