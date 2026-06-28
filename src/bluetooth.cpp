@@ -8,7 +8,7 @@ extern void cleanupSD();
 #include "icon.h"
 #include "Touchscreen.h"
 #include <RCSwitch.h>
-#include <ELECHOUSE_CC1101_ESP32DIV.h>
+#include "ELECHOUSE_CC1101_ESP32DIV.h"
 
 // External reference to SubGHz RCSwitch object (defined in subghz.cpp replayat namespace)
 namespace replayat {

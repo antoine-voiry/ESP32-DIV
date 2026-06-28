@@ -7,7 +7,7 @@
 #ifndef ESP32_DIV_V1_BOARD
 #include <PCF8574.h>
 #endif
-#include <ELECHOUSE_CC1101_ESP32DIV.h>
+#include "ELECHOUSE_CC1101_ESP32DIV.h"
 
 #include <RCSwitch.h>
 #include <EEPROM.h>
