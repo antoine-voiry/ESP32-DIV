@@ -4,6 +4,7 @@
 // Don't include wificonfig.h here - it has "using namespace std;" which breaks map()
 extern void cleanupSD();
 #include "shared.h"
+#include "webui.h"
 #include "icon.h"
 #include "Touchscreen.h"
 #include <RCSwitch.h>
@@ -1356,6 +1357,22 @@ void updateBLEList() {
       tft.setTextColor(SHREDDY_TEAL, TFT_BLACK);
       tft.print("  " + deviceName);
     }
+  }
+
+  if (WebUIService::isActive()) {
+    String json = "{\"event\":\"ble_scan_result\",\"devices\":[";
+    bool first = true;
+    for (int i = 0; i < deviceCount && i < 20; i++) {
+      BLEAdvertisedDevice dev = bleResults.getDevice(i);
+      String devName = dev.getName().length() > 0 ? dev.getName().c_str() : "Unknown Device";
+      int devRssi = dev.getRSSI();
+      String devAddr = dev.getAddress().toString().c_str();
+      if (!first) json += ",";
+      json += "{\"name\":\"" + devName + "\",\"rssi\":" + String(devRssi) + ",\"addr\":\"" + devAddr + "\"}";
+      first = false;
+    }
+    json += "]}";
+    WebUIService::broadcastEvent(json);
   }
 }
 
