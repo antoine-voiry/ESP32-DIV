@@ -1,4 +1,5 @@
 #include "wificonfig.h"
+#include "wifi_frame_logic.h"
 
 // Forward declaration - cleanupNRF24() defined in bluetooth.cpp
 // Don't include bleconfig.h here - cross-include causes compilation issues
@@ -214,7 +215,7 @@ void wifi_promiscuous(void* buf, wifi_promiscuous_pkt_type_t type) {
   wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buf;
   wifi_pkt_rx_ctrl_t ctrl = (wifi_pkt_rx_ctrl_t)pkt->rx_ctrl;
 
-  if (type == WIFI_PKT_MGMT && (pkt->payload[0] == 0xA0 || pkt->payload[0] == 0xC0 )) deauths++;
+  if (type == WIFI_PKT_MGMT && (isDisassocFrame(pkt->payload[0]) || isDeauthFrame(pkt->payload[0]))) deauths++;
 
   if (type == WIFI_PKT_MISC) return;
   if (ctrl.sig_len > SNAP_LEN) return;
@@ -228,7 +229,7 @@ void wifi_promiscuous(void* buf, wifi_promiscuous_pkt_type_t type) {
 
 void setChannel(int newChannel) {
   ch = newChannel;
-  if (ch > MAX_CH || ch < 1) ch = 1;
+  ch = (unsigned int)wrapChannel((uint8_t)ch, 1, (uint8_t)MAX_CH);
 
   preferences.begin("packetmonitor32", false);
   preferences.putUInt("channel", ch);
@@ -1073,7 +1074,7 @@ void snifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
   if (type == WIFI_PKT_MGMT) {
     uint8_t frameType = payload[0];
 
-    if (frameType == 0xC0) {
+    if (isDeauthFrame(frameType)) {
       uint8_t senderMAC[6];
       memcpy(senderMAC, payload + 10, 6);
 
