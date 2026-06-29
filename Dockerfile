@@ -26,9 +26,13 @@ RUN mkdir -p /tmp/preload/src && \
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Wokwi CLI (pinned for reproducibility)
+# Asset naming changed from wokwi-cli-linux-x64 to wokwi-cli-linuxstatic-{arch}
+# Use TARGETARCH for multi-arch support (amd64 → x64, arm64 → arm64)
 ARG WOKWI_CLI_VERSION=0.14.0
-RUN curl -fsSL \
-      "https://github.com/wokwi/wokwi-cli/releases/download/v${WOKWI_CLI_VERSION}/wokwi-cli-linux-x64" \
+ARG TARGETARCH
+RUN ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "x64") && \
+    curl -fsSL \
+      "https://github.com/wokwi/wokwi-cli/releases/download/v${WOKWI_CLI_VERSION}/wokwi-cli-linuxstatic-${ARCH}" \
       -o /usr/local/bin/wokwi-cli && \
     chmod +x /usr/local/bin/wokwi-cli
 
