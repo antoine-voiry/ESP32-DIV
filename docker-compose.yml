@@ -15,6 +15,9 @@ services:
     command: pio test -e native_tests
 
   wokwi-emulate:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: esp32div-ci:latest
     volumes:
       - .:/workspace
