@@ -1,5 +1,6 @@
 #include "wificonfig.h"
 #include "wifi_frame_logic.h"
+#include "wifi_scan_logic.h"
 
 // Forward declaration - cleanupNRF24() defined in bluetooth.cpp
 // Don't include bleconfig.h here - cross-include causes compilation issues
@@ -1092,47 +1093,46 @@ void snifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
 }
 
 void analyzeNetworks(int n) {
-  xSemaphoreTake(tftSemaphore, portMAX_DELAY);
-  displayPrint("[*] Checking for Suspicious Networks", TFT_CYAN, true);
-  xSemaphoreGive(tftSemaphore);
+    xSemaphoreTake(tftSemaphore, portMAX_DELAY);
+    displayPrint("[*] Checking for Suspicious Networks", TFT_CYAN, true);
+    xSemaphoreGive(tftSemaphore);
 
-  for (int i = 0; i < n; i++) {
-    checkButtonPress();
-    if (exitMode) return;
-
-    bool isDuplicate = false;
-    bool isHidden = (ssidLists[i] == "");
-    bool isWeirdChannel = WiFi.channel(i) > 13;
-
-    for (int j = 0; j < n; j++) {
-      if (i != j && ssidLists[i] == ssidLists[j] && memcmp(macList[i], macList[j], 6) != 0) {
-        isDuplicate = true;
-        break;
-      }
+    WifiApInfo allAps[MAX_NETWORKS];
+    for (int i = 0; i < n; i++) {
+        strncpy(allAps[i].ssid, ssidLists[i].c_str(), 32);
+        allAps[i].ssid[32] = '\0';
+        memcpy(allAps[i].bssid, macList[i], 6);
+        allAps[i].rssi    = 0;
+        allAps[i].channel = (uint8_t)WiFi.channel(i);
     }
 
-    if (isHidden) {
-      xSemaphoreTake(tftSemaphore, portMAX_DELAY);
-      displayPrint("[!] Hidden SSID Detected!", TFT_YELLOW, true);
-      xSemaphoreGive(tftSemaphore);
-    }
-    if (isDuplicate) {
-      xSemaphoreTake(tftSemaphore, portMAX_DELAY);
-      displayPrint("[!] Evil Twin: " + ssidLists[i], TFT_YELLOW, true);
-      xSemaphoreGive(tftSemaphore);
-    }
-    if (isWeirdChannel) {
-      xSemaphoreTake(tftSemaphore, portMAX_DELAY);
-      displayPrint("[!] Non-Standard Channel: " + String(WiFi.channel(i)), TFT_YELLOW, true);
-      xSemaphoreGive(tftSemaphore);
-    }
+    for (int i = 0; i < n; i++) {
+        checkButtonPress();
+        if (exitMode) return;
 
-    if (deauth[i] > 5) {
-      xSemaphoreTake(tftSemaphore, portMAX_DELAY);
-      displayPrint("[!!!] HIGH DEAUTH ATTACK on " + ssidLists[i] + " (" + String(deauth[i]) + " attacks)", ORANGE, true);
-      xSemaphoreGive(tftSemaphore);
+        NetworkAnomaly flags = analyzeAp(&allAps[i], allAps, n, deauth[i]);
+
+        if (flags.isHidden) {
+            xSemaphoreTake(tftSemaphore, portMAX_DELAY);
+            displayPrint("[!] Hidden SSID Detected!", TFT_YELLOW, true);
+            xSemaphoreGive(tftSemaphore);
+        }
+        if (flags.isEvilTwin) {
+            xSemaphoreTake(tftSemaphore, portMAX_DELAY);
+            displayPrint("[!] Evil Twin: " + ssidLists[i], TFT_YELLOW, true);
+            xSemaphoreGive(tftSemaphore);
+        }
+        if (flags.isWeirdChannel) {
+            xSemaphoreTake(tftSemaphore, portMAX_DELAY);
+            displayPrint("[!] Non-Standard Channel: " + String(allAps[i].channel), TFT_YELLOW, true);
+            xSemaphoreGive(tftSemaphore);
+        }
+        if (flags.isUnderAttack) {
+            xSemaphoreTake(tftSemaphore, portMAX_DELAY);
+            displayPrint("[!!!] HIGH DEAUTH ATTACK on " + ssidLists[i] + " (" + String(deauth[i]) + " attacks)", ORANGE, true);
+            xSemaphoreGive(tftSemaphore);
+        }
     }
-  }
 }
 
 void scanWiFiTask(void *param) {
