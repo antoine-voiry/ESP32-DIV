@@ -1,6 +1,7 @@
 #include "wificonfig.h"
 #include "wifi_frame_logic.h"
 #include "wifi_scan_logic.h"
+#include "wifi_beacon_logic.h"
 
 // Forward declaration - cleanupNRF24() defined in bluetooth.cpp
 // Don't include bleconfig.h here - cross-include causes compilation issues
@@ -507,15 +508,15 @@ uint8_t packet[128] = {0x80, 0x00, 0x00, 0x00,
                       };
 
 void handleLeftButton() {
-  spamchannel = (spamchannel == 1) ? 14 : spamchannel - 1;
+    spamchannel = channelDown(spamchannel, 14);
 }
 
 void handleRightButton() {
-  spamchannel = (spamchannel == 14) ? 1 : spamchannel + 1;
+    spamchannel = channelUp(spamchannel, 14);
 }
 
 void handleSelectButton() {
-  spam = !spam;
+    spam = toggleAttack(spam);
 }
 
 void output() {
@@ -570,39 +571,24 @@ void output() {
 }
 
 void spammer() {
-  esp_wifi_set_channel(spamchannel, WIFI_SECOND_CHAN_NONE);
+    esp_wifi_set_channel(spamchannel, WIFI_SECOND_CHAN_NONE);
 
-  for (int i = 10; i <= 21; i++) {
-    packet[i] = random(256);
-  }
+    for (int i = 10; i <= 21; i++) {
+        packet[i] = random(256);
+    }
 
-  String randomSSID = ssidList[random(ssidCount)];
-  int ssidLength = randomSSID.length();
-  if (ssidLength > 32) ssidLength = 32;  // Cap at max SSID length to prevent overflow
-  packet[37] = ssidLength;
+    String randomSSID = ssidList[random(ssidCount)];
+    int ssidLength = randomSSID.length();
+    if (ssidLength > 32) ssidLength = 32;
 
-  for (int i = 0; i < ssidLength; i++) {
-    packet[38 + i] = randomSSID[i];
-  }
+    int packetSize = buildBeaconTlv(packet, sizeof(packet),
+                                    randomSSID.c_str(), (uint8_t)ssidLength,
+                                    spamchannel);
+    if (packetSize < 0) return;
 
-  // Recalculate positions based on actual SSID length
-  int ratesOffset = 38 + ssidLength;
-  packet[ratesOffset] = 0x01;      // Supported rates tag
-  packet[ratesOffset + 1] = 0x08;  // Length
-  packet[ratesOffset + 2] = 0x82; packet[ratesOffset + 3] = 0x84;
-  packet[ratesOffset + 4] = 0x8b; packet[ratesOffset + 5] = 0x96;
-  packet[ratesOffset + 6] = 0x24; packet[ratesOffset + 7] = 0x30;
-  packet[ratesOffset + 8] = 0x48; packet[ratesOffset + 9] = 0x6c;
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, packetSize, false);
 
-  int dsOffset = ratesOffset + 10;
-  packet[dsOffset] = 0x03;         // DS Parameter tag
-  packet[dsOffset + 1] = 0x01;     // Length
-  packet[dsOffset + 2] = spamchannel;
-
-  int packetSize = dsOffset + 3;
-  esp_wifi_80211_tx(WIFI_IF_AP, packet, packetSize, false);
-
-  delay(1);
+    delay(1);
 }
 
 void beaconSpam() {
