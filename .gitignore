@@ -43,3 +43,4 @@ skills-lock.json
 
 # Local-only docs (never commit)
 docs/
+.env
