@@ -91,10 +91,20 @@ void test_compare_equal_rssi() {
     TEST_ASSERT_EQUAL_INT(0, compareApByRssi(&a, &b));
 }
 
+void test_hidden_ssid_evil_twin() {
+    WifiApInfo allAps[2];
+    allAps[0] = makeAp("", 0xAA,0xBB,0xCC,0xDD,0xEE,0x01, -70, 6);
+    allAps[1] = makeAp("", 0xAA,0xBB,0xCC,0xDD,0xEE,0x02, -75, 6);
+    NetworkAnomaly r = analyzeAp(&allAps[0], allAps, 2, 0);
+    TEST_ASSERT_TRUE(r.isHidden);
+    TEST_ASSERT_TRUE(r.isEvilTwin);
+}
+
 int main(int argc, char** argv) {
     UNITY_BEGIN();
     RUN_TEST(test_normal_ap);
     RUN_TEST(test_hidden_ssid);
+    RUN_TEST(test_hidden_ssid_evil_twin);
     RUN_TEST(test_evil_twin);
     RUN_TEST(test_no_evil_twin_same_bssid);
     RUN_TEST(test_no_evil_twin_single_ap);
