@@ -3065,6 +3065,7 @@ void handleButtons() {
     } else {
       
         if (isButtonPressed(BTN_UP) && !is_main_menu) {
+            Serial.println("BTN:UP");
             current_menu_index--;
             if (current_menu_index < 0) {
                 current_menu_index = NUM_MENU_ITEMS - 1; 
@@ -3234,6 +3235,7 @@ void setup() {
   //digitalWrite(BACKLIGHT_PIN, HIGH);
   
   pcf.begin();
+  Serial.println("ESP32-DIV:READY");
   pcf.pinMode(BTN_UP, INPUT_PULLUP);
   pcf.pinMode(BTN_DOWN, INPUT_PULLUP);
   pcf.pinMode(BTN_LEFT, INPUT_PULLUP);
