@@ -1,0 +1,12 @@
+name: "PCF8574 UP Button I2C Detection"
+version: 1
+steps:
+  - wait-serial-line:
+      value: "ESP32-DIV:READY"
+      timeout: 15000
+  - delay: 300
+  - click-button:
+      id: btn1
+  - wait-serial-line:
+      value: "BTN:UP"
+      timeout: 5000

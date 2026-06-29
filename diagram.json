@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "author": "ESP32-DIV",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkitc-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-pcf8574",
+      "id": "pcf1",
+      "top": 32,
+      "left": 240,
+      "attrs": {
+        "a0": "0",
+        "a1": "0",
+        "a2": "0"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 160,
+      "left": 300,
+      "attrs": {
+        "color": "green",
+        "label": "UP"
+      }
+    }
+  ],
+  "connections": [
+    ["esp:GPIO21",  "pcf1:SDA",  "green",  []],
+    ["esp:GPIO22",  "pcf1:SCL",  "blue",   []],
+    ["esp:GND.1",   "pcf1:GND",  "black",  []],
+    ["esp:3V3.1",   "pcf1:VCC",  "red",    []],
+    ["pcf1:P6",     "btn1:1.l",  "orange", []],
+    ["esp:GND.2",   "btn1:2.l",  "black",  []]
+  ]
+}
