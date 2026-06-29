@@ -138,3 +138,4 @@ All non-source artifacts live under `docs/` and are committed to the repo:
 4. ✅ No S3-specific code (USB, PSRAM silicon assumptions, strap pins).
 5. ✅ Builds cleanly with Arduino IDE without modification.
 6. ✅ Audit/design reports live in `docs/reports/`, not repo root.
+7. ✅ Unit test **branch coverage ≥ 90%** for any pure-logic code added or modified. No dead code. (Line coverage is not the metric — every reachable branch must be exercised. See TECH-001 in `docs/bugs/bug-list.md` for current coverage debt.)
