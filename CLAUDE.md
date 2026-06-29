@@ -139,3 +139,4 @@ All non-source artifacts live under `docs/` and are committed to the repo:
 5. ✅ Builds cleanly with Arduino IDE without modification.
 6. ✅ Audit/design reports live in `docs/reports/`, not repo root.
 7. ✅ Unit test **branch coverage ≥ 90%** for any pure-logic code added or modified. No dead code. (Line coverage is not the metric — every reachable branch must be exercised. See TECH-001 in `docs/bugs/bug-list.md` for current coverage debt.)
+8. ✅ **Any function with a non-trivial conditional (`if`/`else`, `switch`, ternary with side-effects) lives in `lib/logic/`**, not in `src/`. `src/` files are hardware I/O wrappers only — they call into `lib/logic/` and forward results to hardware. Logic that cannot be expressed without Arduino/ESP32 hardware headers is the only exception. Enforcement: if a new function in `src/` has a branch, ask "can this be extracted?" — if yes, it must be.
