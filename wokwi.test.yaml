@@ -3,7 +3,7 @@ version: 1
 steps:
   - wait-serial-line:
       value: "ESP32-DIV:READY"
-      timeout: 15000
+      timeout: 20000
   - delay: 300
   - click-button:
       id: btn1
