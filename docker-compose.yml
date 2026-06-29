@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+
+  native-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: esp32div-ci:latest
+    volumes:
+      - .:/workspace                          # project source (read-write)
+      - pio_home_cache:/root/.platformio      # PlatformIO platform/toolchain cache
+      - pio_build_native:/workspace/.pio      # native GCC build artefacts — ISOLATED from host
+    working_dir: /workspace
+    command: pio test -e native_tests
+
+  wokwi-emulate:
+    image: esp32div-ci:latest
+    volumes:
+      - .:/workspace
+      - pio_home_cache:/root/.platformio
+      - pio_build_hw:/workspace/.pio          # Xtensa ELF/bin artefacts — separate volume
+    working_dir: /workspace
+    environment:
+      WOKWI_CLI_TOKEN: "${WOKWI_CLI_TOKEN}"
+    command: >
+      sh -c "pio run -e esp32_v1_hardware &&
+             wokwi-cli --timeout 60000 ."
+
+volumes:
+  pio_home_cache:     # shared: platform + toolchain cache (pre-baked in image)
+  pio_build_native:   # native env .pio/build objects (Linux GCC, x86_64)
+  pio_build_hw:       # hardware env .pio/build objects (Xtensa ELF + bin)
