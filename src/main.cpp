@@ -2219,9 +2219,9 @@ void displayDeviceInfo() {
 
     tft.setCursor(10, y); tft.print("Device: ESP32-DIV");
     y += 25;
-    tft.setCursor(10, y); tft.print("Version: v2.5.0 - HaleHound");
+    tft.setCursor(10, y); tft.print("Version: v0.1.0 - HAL9000");
     y += 25;
-    tft.setCursor(10, y); tft.print("By: HaleHound (JMFH)");
+    tft.setCursor(10, y); tft.print("By: AVo");
     y += 25;
     tft.setCursor(10, y); tft.print("Original: CiferTech");
     y += 25;
@@ -3026,19 +3026,19 @@ void handleAboutPage() {
   int text_x = 10;
   int text_y = 130;
   tft.setCursor(text_x, text_y);
-  tft.println("- ESP32-DIV v2.5.0");
+  tft.println("- ESP32-DIV v0.1.0");
   text_y += lineHeight;
   tft.setCursor(text_x, text_y);
-  tft.println("- HaleHound Edition");
+  tft.println("- HAL9000 Edition");
   text_y += lineHeight;
   tft.setCursor(text_x, text_y);
-  tft.println("- By: JMFH");
+  tft.println("- By: AVo");
+  text_y += lineHeight;
+  tft.setCursor(text_x, text_y);
+  tft.println("- Inspired: HaleHound");
   text_y += lineHeight;
   tft.setCursor(text_x, text_y);
   tft.println("- Original: CiferTech");
-  text_y += lineHeight;
-  tft.setCursor(text_x, text_y);
-  tft.println("- GitHub: github.com/JesseCHale");
   text_y += lineHeight;
 
 

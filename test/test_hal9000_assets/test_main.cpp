@@ -1,5 +1,5 @@
 #include <unity.h>
-#include "Arduino.h"   // mock — defines PROGMEM as nothing for native builds
+#include "arduino_progmem_shim.h"   // mock — defines PROGMEM as nothing for native builds
 #include "icon.h"
 #include "hal9000_bg.h"
 #include "home_bg.h"

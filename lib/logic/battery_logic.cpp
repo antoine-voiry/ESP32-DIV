@@ -20,3 +20,9 @@ int computeWifiStrength(int rssi) {
     if (mapped > 100) return 100;
     return (int)mapped;
 }
+
+int computeTempStatus(float tempC) {
+    if (tempC >= 80.0f) return 2;
+    if (tempC >= 65.0f) return 1;
+    return 0;
+}

@@ -21,6 +21,17 @@ void test_percent_at_ceil_exact()  { TEST_ASSERT_EQUAL_INT(100, computeBatteryPe
 void test_percent_low_quarter()  { TEST_ASSERT_EQUAL_INT(25,  computeBatteryPercent(3.3f)); }
 void test_percent_high_quarter() { TEST_ASSERT_EQUAL_INT(75,  computeBatteryPercent(3.9f)); }
 
+// computeTempStatus — ESP32 die temperature thresholds (0=OK, 1=WARN, 2=ERR)
+// Regression guard: thresholds were previously 50/55°C (ambient), causing ESP32
+// idle die temp (~50°C) to always show orange. Recalibrated to 65/80°C for die temp.
+void test_temp_idle_ok()       { TEST_ASSERT_EQUAL_INT(0, computeTempStatus(53.0f)); }
+void test_temp_warm_ok()       { TEST_ASSERT_EQUAL_INT(0, computeTempStatus(64.9f)); }
+void test_temp_warn_boundary() { TEST_ASSERT_EQUAL_INT(1, computeTempStatus(65.0f)); }
+void test_temp_warn_mid()      { TEST_ASSERT_EQUAL_INT(1, computeTempStatus(72.0f)); }
+void test_temp_err_boundary()  { TEST_ASSERT_EQUAL_INT(2, computeTempStatus(80.0f)); }
+void test_temp_err_high()      { TEST_ASSERT_EQUAL_INT(2, computeTempStatus(95.0f)); }
+void test_temp_cold()          { TEST_ASSERT_EQUAL_INT(0, computeTempStatus(20.0f)); }
+
 // computeWifiStrength — clamps [0, 100], maps -100 dBm to -30 dBm
 void test_wifi_max()          { TEST_ASSERT_EQUAL_INT(100, computeWifiStrength(-30)); }
 void test_wifi_min()          { TEST_ASSERT_EQUAL_INT(0,   computeWifiStrength(-100)); }
@@ -47,6 +58,13 @@ int main(int argc, char** argv) {
     RUN_TEST(test_percent_at_ceil_exact);
     RUN_TEST(test_percent_low_quarter);
     RUN_TEST(test_percent_high_quarter);
+    RUN_TEST(test_temp_idle_ok);
+    RUN_TEST(test_temp_warm_ok);
+    RUN_TEST(test_temp_warn_boundary);
+    RUN_TEST(test_temp_warn_mid);
+    RUN_TEST(test_temp_err_boundary);
+    RUN_TEST(test_temp_err_high);
+    RUN_TEST(test_temp_cold);
     RUN_TEST(test_wifi_max);
     RUN_TEST(test_wifi_min);
     RUN_TEST(test_wifi_mid);

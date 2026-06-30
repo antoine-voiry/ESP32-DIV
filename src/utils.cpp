@@ -169,8 +169,8 @@ float readBatteryVoltage() {
 }
 
 float readInternalTemperature() {
-  float temperature = ((temprature_sens_read() - 32) / 1.8); 
-  return temperature;
+  uint8_t raw = temprature_sens_read();
+  return ((raw - 32) / 1.8);
 }
 
 // Check if SD card is available
@@ -233,13 +233,11 @@ void drawStatusBar(float batteryVoltage, bool forceUpdate) {
       }
     }
 
-    // Temperature icon
-    if (internalTemp >= 55) {
-      tft.drawBitmap(203, y - 3, bitmap_icon_temp, 16, 16, STATUS_ERR);
-    } else if (internalTemp >= 50) {
-      tft.drawBitmap(203, y - 3, bitmap_icon_temp, 16, 16, STATUS_WARN);
-    } else {
-      tft.drawBitmap(203, y - 3, bitmap_icon_temp, 16, 16, STATUS_OK);
+    // Temperature icon — thresholds via computeTempStatus (die temperature)
+    {
+      int ts = computeTempStatus(internalTemp);
+      uint16_t tc = (ts == 2) ? STATUS_ERR : (ts == 1) ? STATUS_WARN : STATUS_OK;
+      tft.drawBitmap(203, y - 3, bitmap_icon_temp, 16, 16, tc);
     }
 
     // SD card icon
@@ -314,13 +312,13 @@ void loading(int frameDelay, uint16_t color, int16_t x, int16_t y, int repeats, 
       // Draw skull frame
       tft.drawBitmap(logoX, logoY, bitmaps[i], bitmapWidth, bitmapHeight, frameColor);
 
-      // Draw HALEHOUND text below skull
+      // Draw title text below loading animation
       if (center) {
         tft.setTextFont(4);
         tft.setTextSize(1);
         tft.setTextColor(frameColor, TFT_BLACK);
 
-        const char* text = "HALEHOUND";
+        const char* text = "ESP32-DIV";
         int16_t textW = tft.textWidth(text);
         int16_t textX = (screenWidth - textW) / 2;
         int16_t textY = logoY + bitmapHeight + 10;
@@ -348,11 +346,11 @@ void displayLogo(uint16_t color, int displayTime) {
   // Clear screen with black
   tft.fillScreen(TFT_BLACK);
 
-  // Draw full-screen skull stack in muted gray
-  tft.drawBitmap(0, 0, bitmap_halehound_splash, HALEHOUND_SPLASH_WIDTH, HALEHOUND_SPLASH_HEIGHT, GRAY);
+  // Draw HAL9000 splash panel in red
+  tft.drawBitmap(0, 0, bitmap_hal9000_splash, HAL9000_SPLASH_WIDTH, HAL9000_SPLASH_HEIGHT, STATUS_ERR);
 
-  // Draw branding text in HaleHound magenta
-  tft.setTextColor(HALEHOUND_MAGENTA);
+  // Draw branding text in HAL red
+  tft.setTextColor(STATUS_ERR);
 
   // ESP32-DIV title - larger
   tft.setTextFont(4);  // Font 4 = 26px, clean and sharp
@@ -364,23 +362,23 @@ void displayLogo(uint16_t color, int displayTime) {
 
   // Version line
   tft.setTextFont(2);  // Font 2 = 16px
-  String version = "v2.5.0 - HaleHound Edition";
+  String version = "v0.1.0 - HAL9000 Edition";
   int16_t versionWidth = tft.textWidth(version);
   tft.setCursor((screenWidth - versionWidth) / 2, 285);
   tft.print(version);
 
   // Credit line
   tft.setTextFont(2);
-  String credit = "By: JMFH";
+  String credit = "By: AVo";
   int16_t creditWidth = tft.textWidth(credit);
   tft.setCursor((screenWidth - creditWidth) / 2, 303);
   tft.print(credit);
 
   Serial.println("==========================================");
-  Serial.println("ESP32-DIV v2.5.0 - HaleHound Edition      ");
-  Serial.println("Developed by: HaleHound (JMFH)            ");
+  Serial.println("ESP32-DIV v0.1.0 - HAL9000 Edition        ");
+  Serial.println("Developed by: AVo                         ");
+  Serial.println("Inspired by:  HaleHound (JMFH)            ");
   Serial.println("Original by:  CiferTech                   ");
-  Serial.println("GitHub:       github.com/JesseCHale       ");
   Serial.println("==========================================");
 
   delay(displayTime);
