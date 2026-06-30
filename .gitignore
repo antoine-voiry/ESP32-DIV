@@ -41,6 +41,8 @@ design-report-*.md
 skills-lock.json
 .markdownlint.json
 
-# Local-only docs (never commit)
-docs/
+# Local-only docs (never commit) — hardware/ subdir is committed: board reference files
+docs/*
+!docs/hardware
+!docs/hardware/**
 .env

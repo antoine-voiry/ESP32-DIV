@@ -23,6 +23,7 @@
 #include "hal/SdStorage.h"
 #include "hal/CC1101Radio.h"
 #include "hal/Nrf24Radio.h"
+#include "proximity_wand.h"
 
 TFT_eSPI tft = TFT_eSPI();
 
@@ -101,10 +102,11 @@ const char *subghz_submenu_items[subghz_NUM_SUBMENU_ITEMS] = {
     "Back to Main Menu"};  
 
 
-const int tools_NUM_SUBMENU_ITEMS = 3;
+const int tools_NUM_SUBMENU_ITEMS = 4;
 const char *tools_submenu_items[tools_NUM_SUBMENU_ITEMS] = {
     "Serial Monitor",
     "Update Firmware",
+    "Proximity Wand",
     "Back to Main Menu"};
 
 
@@ -174,6 +176,7 @@ const unsigned char *subghz_submenu_icons[subghz_NUM_SUBMENU_ITEMS] = {
 const unsigned char *tools_submenu_icons[tools_NUM_SUBMENU_ITEMS] = {
     bitmap_icon_bash,     // Serial Monitor
     bitmap_icon_follow,   // Update Firmware
+    bitmap_icon_scanner,  // Proximity Wand
     bitmap_icon_go_back
 };
 
@@ -2550,7 +2553,7 @@ void handleToolsSubmenuButtons() {
         last_interaction_time = millis();
         delay(200);
 
-        if (current_submenu_index == 2) {
+        if (current_submenu_index == 3) {
             in_sub_menu = false;
             feature_active = false;
             feature_exit_requested = false;
@@ -2599,34 +2602,69 @@ void handleToolsSubmenuButtons() {
             feature_active = true;
             feature_exit_requested = false; 
             FirmwareUpdate::updateSetup();
-            while (current_submenu_index == 1 && !feature_exit_requested) {  
+            while (current_submenu_index == 1 && !feature_exit_requested) {
                 current_submenu_index = 1;
                 in_sub_menu = true;
-                FirmwareUpdate::updateLoop();       
+                FirmwareUpdate::updateLoop();
                 if (isButtonPressed(BTN_SELECT)) {
                     in_sub_menu = true;
-                    is_main_menu = false; 
+                    is_main_menu = false;
                     submenu_initialized = false;
                     feature_active = false;
-                    feature_exit_requested = false; 
-                    displaySubmenu(); 
-                    delay(200);            
+                    feature_exit_requested = false;
+                    displaySubmenu();
+                    delay(200);
                     while (isButtonPressed(BTN_SELECT)) {
                         delay(10); yield();
-                    }           
-                    break;  
+                    }
+                    break;
                 }
             }
             if (feature_exit_requested) {
                 in_sub_menu = true;
-                is_main_menu = false; 
+                is_main_menu = false;
                 submenu_initialized = false;
                 feature_active = false;
-                feature_exit_requested = false; 
-                displaySubmenu(); 
+                feature_exit_requested = false;
+                displaySubmenu();
                 delay(200);
             }
-        }     
+        }
+
+        if (current_submenu_index == 2) {
+            current_submenu_index = 2;
+            in_sub_menu = true;
+            feature_active = true;
+            feature_exit_requested = false;
+            ProximityWand::setup();
+            while (current_submenu_index == 2 && !feature_exit_requested) {
+                current_submenu_index = 2;
+                in_sub_menu = true;
+                ProximityWand::loop();
+                if (isButtonPressed(BTN_SELECT)) {
+                    in_sub_menu = true;
+                    is_main_menu = false;
+                    submenu_initialized = false;
+                    feature_active = false;
+                    feature_exit_requested = false;
+                    displaySubmenu();
+                    delay(200);
+                    while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
+                    }
+                    break;
+                }
+            }
+            if (feature_exit_requested) {
+                in_sub_menu = true;
+                is_main_menu = false;
+                submenu_initialized = false;
+                feature_active = false;
+                feature_exit_requested = false;
+                displaySubmenu();
+                delay(200);
+            }
+        }
     }
 
     if (ts.touched() && !feature_active) {
@@ -2652,7 +2690,7 @@ void handleToolsSubmenuButtons() {
                 displaySubmenu();
                 delay(200);
 
-                if (current_submenu_index == 2) {
+                if (current_submenu_index == 3) {
                     in_sub_menu = false;
                     feature_active = false;
                     feature_exit_requested = false;
@@ -2718,14 +2756,47 @@ void handleToolsSubmenuButtons() {
                     }                  
                     if (feature_exit_requested) {
                         in_sub_menu = true;
-                        is_main_menu = false; 
+                        is_main_menu = false;
                         submenu_initialized = false;
                         feature_active = false;
-                        feature_exit_requested = false; 
-                        displaySubmenu(); 
+                        feature_exit_requested = false;
+                        displaySubmenu();
                         delay(200);
                     }
-                } 
+                } else if (current_submenu_index == 2) {
+                    current_submenu_index = 2;
+                    in_sub_menu = true;
+                    feature_active = true;
+                    feature_exit_requested = false;
+                    ProximityWand::setup();
+                    while (current_submenu_index == 2 && !feature_exit_requested) {
+                        current_submenu_index = 2;
+                        in_sub_menu = true;
+                        ProximityWand::loop();
+                        if (isButtonPressed(BTN_SELECT)) {
+                            in_sub_menu = true;
+                            is_main_menu = false;
+                            submenu_initialized = false;
+                            feature_active = false;
+                            feature_exit_requested = false;
+                            displaySubmenu();
+                            delay(200);
+                            while (isButtonPressed(BTN_SELECT)) {
+                                delay(10); yield();
+                            }
+                            break;
+                        }
+                    }
+                    if (feature_exit_requested) {
+                        in_sub_menu = true;
+                        is_main_menu = false;
+                        submenu_initialized = false;
+                        feature_active = false;
+                        feature_exit_requested = false;
+                        displaySubmenu();
+                        delay(200);
+                    }
+                }
                 break;
             }
         }
