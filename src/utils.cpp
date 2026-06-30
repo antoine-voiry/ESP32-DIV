@@ -291,25 +291,22 @@ void loading(int frameDelay, uint16_t color, int16_t x, int16_t y, int repeats, 
 
   // Array of bitmaps
   const unsigned char* bitmaps[] = {
-    bitmap_icon_skull_loading_1,
-    bitmap_icon_skull_loading_2,
-    bitmap_icon_skull_loading_3,
-    bitmap_icon_skull_loading_4,
-    bitmap_icon_skull_loading_5,
-    bitmap_icon_skull_loading_6,
-    bitmap_icon_skull_loading_7,
-    bitmap_icon_skull_loading_8,
-    bitmap_icon_skull_loading_9,
-    bitmap_icon_skull_loading_10
+    bitmap_icon_hal9000_loading_1,
+    bitmap_icon_hal9000_loading_2,
+    bitmap_icon_hal9000_loading_3,
+    bitmap_icon_hal9000_loading_4,
+    bitmap_icon_hal9000_loading_5,
+    bitmap_icon_hal9000_loading_6,
+    bitmap_icon_hal9000_loading_7,
+    bitmap_icon_hal9000_loading_8,
+    bitmap_icon_hal9000_loading_9,
+    bitmap_icon_hal9000_loading_10
   };
   const int numFrames = 10;
 
-  // HaleHound colors - alternating magenta and cyan
-  uint16_t colors[] = {HALEHOUND_MAGENTA, HALEHOUND_CYAN};
-
   for (int r = 0; r < repeats; r++) {
     for (int i = 0; i < numFrames; i++) {
-      uint16_t frameColor = colors[i % 2];  // Alternate colors
+      uint16_t frameColor = STATUS_ERR;  // HAL red
 
       // Clear skull area
       tft.fillRect(logoX, logoY, bitmapWidth, bitmapHeight + 40, TFT_BLACK);

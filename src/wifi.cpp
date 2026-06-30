@@ -2836,16 +2836,16 @@ void resetWifi() {
 // Skull spinner state
 int skullFrame = 0;
 
-// All 8 skull menu icons in array
+// All 8 HAL9000 menu icons in array
 const unsigned char* skullIcons[] = {
-    bitmap_icon_skull_wifi,
-    bitmap_icon_skull_bluetooth,
-    bitmap_icon_skull_jammer,
-    bitmap_icon_skull_subghz,
-    bitmap_icon_skull_ir,
-    bitmap_icon_skull_tools,
-    bitmap_icon_skull_setting,
-    bitmap_icon_skull_about
+    bitmap_icon_hal9000_wifi,
+    bitmap_icon_hal9000_bluetooth,
+    bitmap_icon_hal9000_jammer,
+    bitmap_icon_hal9000_subghz,
+    bitmap_icon_hal9000_ir,
+    bitmap_icon_hal9000_tools,
+    bitmap_icon_hal9000_setting,
+    bitmap_icon_hal9000_about
 };
 const int numSkulls = 8;
 

@@ -14,7 +14,7 @@
 #include "webui.h"
 #include "eeprom_layout.h"
 #include "icon.h"
-#include "skull_bg.h"
+#include "hal9000_bg.h"
 
 #include "hal/hal_globals.h"
 #include "hal/TftDisplay.h"
@@ -50,14 +50,14 @@ const char *menu_items[NUM_MENU_ITEMS] = {
     "About"};
 
 const unsigned char *bitmap_icons[NUM_MENU_ITEMS] = {
-    bitmap_icon_skull_wifi,
-    bitmap_icon_skull_bluetooth,
-    bitmap_icon_skull_jammer,
-    bitmap_icon_skull_subghz,
-    bitmap_icon_skull_ir,
-    bitmap_icon_skull_tools,
-    bitmap_icon_skull_setting,
-    bitmap_icon_skull_about};
+    bitmap_icon_hal9000_wifi,
+    bitmap_icon_hal9000_bluetooth,
+    bitmap_icon_hal9000_jammer,
+    bitmap_icon_hal9000_subghz,
+    bitmap_icon_hal9000_ir,
+    bitmap_icon_hal9000_tools,
+    bitmap_icon_hal9000_setting,
+    bitmap_icon_hal9000_about};
 
 int current_menu_index = 0;
 bool is_main_menu = false;
@@ -167,7 +167,7 @@ const unsigned char *nrf_submenu_icons[nrf_NUM_SUBMENU_ITEMS] = {
 
 const unsigned char *subghz_submenu_icons[subghz_NUM_SUBMENU_ITEMS] = {
     bitmap_icon_antenna,   // Replay Attack
-    bitmap_icon_skull,     // Brute Force
+    bitmap_icon_hal9000_eye,  // Brute Force
     bitmap_icon_no_signal, // SubGHz Jammer
     bitmap_icon_list,      // Saved Profile
     bitmap_icon_go_back
@@ -360,15 +360,15 @@ const uint16_t icon_colors[NUM_MENU_ITEMS] = {
     tft.setTextFont(2);
 
     if (!menu_initialized) {
-        // Black background with skull in magenta
+        // Black background with HAL9000 eye panel
         tft.fillScreen(BG_BASE);
 
-        // Center the skull on screen
-        int skullX = (240 - SKULL_BG_WIDTH) / 2;
-        int skullY = (320 - SKULL_BG_HEIGHT) / 2;
+        // Center the HAL9000 panel on screen
+        int hal9000X = (240 - HAL9000_BG_WIDTH) / 2;
+        int hal9000Y = (320 - HAL9000_BG_HEIGHT) / 2;
 
-        // Draw skull in dark magenta (subtle background)
-        tft.drawBitmap(skullX, skullY, skull_bg_bitmap, SKULL_BG_WIDTH, SKULL_BG_HEIGHT, 0x4808);
+        // Draw HAL9000 eye in red
+        tft.drawBitmap(hal9000X, hal9000Y, hal9000_bg_bitmap, HAL9000_BG_WIDTH, HAL9000_BG_HEIGHT, 0xF800);
 
         for (int i = 0; i < NUM_MENU_ITEMS; i++) {
             int column = i / 4;
