@@ -2,6 +2,7 @@
 #include "wifi_frame_logic.h"
 #include "wifi_scan_logic.h"
 #include "wifi_beacon_logic.h"
+#include "wifi_packet_logic.h"
 
 // Forward declaration - cleanupNRF24() defined in bluetooth.cpp
 // Don't include bleconfig.h here - cross-include causes compilation issues
@@ -205,12 +206,7 @@ esp_err_t event_handler(void* ctx, system_event_t* event) {
 }
 
 double getMultiplicator() {
-  uint32_t maxVal = 1;
-  for (int i = 0; i < MAX_X; i++) {
-    if (pkts[i] > maxVal) maxVal = pkts[i];
-  }
-  if (maxVal > MAX_Y) return (double)MAX_Y / (double)maxVal;
-  else return 1;
+    return computePacketGraphScale(pkts, MAX_X, (double)MAX_Y);
 }
 
 void wifi_promiscuous(void* buf, wifi_promiscuous_pkt_type_t type) {
