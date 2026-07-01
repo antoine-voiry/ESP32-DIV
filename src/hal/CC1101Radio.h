@@ -8,6 +8,7 @@ class CC1101Radio : public ISubGhzRadio {
     bool _present = false;
 public:
     void init() override {
+        ELECHOUSE_cc1101.setGDO(16, 26);  // GDO0=16 (TX), GDO2=26 (RX) — must precede Init()
         ELECHOUSE_cc1101.Init();
         _present = ELECHOUSE_cc1101.getCC1101();
     }

@@ -3303,10 +3303,6 @@ void setup() {
     gNrf3    = &halNrf3;
 
   Serial.begin(115200);
-  gSubGhz->init();
-  if (!gSubGhz->isPresent()) {
-      Serial.println("[CC1101] not detected — SubGHz disabled");
-  }
 
   EEPROM.begin(EEPROM_TOTAL_SIZE);
   loadThemeFromEEPROM();   // must run before any tft color usage
@@ -3318,15 +3314,20 @@ void setup() {
   setupTouchscreen();
 
   loading(100, ORANGE, 0, 0, 2, true);
-  
+
   tft.fillScreen(TFT_BLACK);
 
   displayLogo(HALEHOUND_MAGENTA, 3500);  // 3.5 seconds
-  
+
   //pinMode(36, INPUT);
   //pinMode(BACKLIGHT_PIN, OUTPUT);
   //digitalWrite(BACKLIGHT_PIN, HIGH);
-  
+
+  gSubGhz->init();  // SPI bus must be up before CC1101 register readback
+  if (!gSubGhz->isPresent()) {
+      Serial.println("[CC1101] not detected — SubGHz disabled");
+  }
+
   pcf.begin();
   Serial.println("ESP32-DIV:READY");
   pcf.pinMode(BTN_UP, INPUT_PULLUP);
