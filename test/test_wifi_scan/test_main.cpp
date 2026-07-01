@@ -100,6 +100,14 @@ void test_hidden_ssid_evil_twin() {
     TEST_ASSERT_TRUE(r.isEvilTwin);
 }
 
+// Failure mode: sign inversion → ascending sort instead of descending (worse rssi sorts first)
+void test_compare_lower_rssi_sorts_after() {
+    WifiApInfo worse = {}; worse.rssi = -80;
+    WifiApInfo better = {}; better.rssi = -60;
+    int result = compareApByRssi(&worse, &better);
+    TEST_ASSERT_GREATER_THAN(0, result);
+}
+
 int main(int argc, char** argv) {
     UNITY_BEGIN();
     RUN_TEST(test_normal_ap);
@@ -114,5 +122,6 @@ int main(int argc, char** argv) {
     RUN_TEST(test_not_under_attack_5);
     RUN_TEST(test_compare_higher_rssi_first);
     RUN_TEST(test_compare_equal_rssi);
+    RUN_TEST(test_compare_lower_rssi_sorts_after);
     return UNITY_END();
 }

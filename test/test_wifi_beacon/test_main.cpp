@@ -62,6 +62,20 @@ void test_buildBeaconTlv_overflow() {
     TEST_ASSERT_EQUAL_INT(-1, result);
 }
 
+// Failure mode: off-by-one → SSID length byte written as 1 instead of 0
+void test_buildBeaconTlv_ssid_zero_len_byte() {
+    uint8_t buf[64] = {};
+    buildBeaconTlv(buf, sizeof(buf), "", 0, 6);
+    TEST_ASSERT_EQUAL_UINT8(0, buf[37]);
+}
+
+// Failure mode: size calculation adds 1 for empty SSID → returns 52 instead of 51
+void test_buildBeaconTlv_ssid_zero_return_size() {
+    uint8_t buf[64] = {};
+    int result = buildBeaconTlv(buf, sizeof(buf), "", 0, 6);
+    TEST_ASSERT_EQUAL_INT(51, result);
+}
+
 int main(int argc, char** argv) {
     UNITY_BEGIN();
     RUN_TEST(test_channelDown_normal);
@@ -77,5 +91,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_buildBeaconTlv_ds_tag);
     RUN_TEST(test_buildBeaconTlv_ds_channel);
     RUN_TEST(test_buildBeaconTlv_overflow);
+    RUN_TEST(test_buildBeaconTlv_ssid_zero_len_byte);
+    RUN_TEST(test_buildBeaconTlv_ssid_zero_return_size);
     return UNITY_END();
 }

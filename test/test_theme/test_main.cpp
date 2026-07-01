@@ -62,6 +62,26 @@ void test_validate_raw_out_of_range() {
     TEST_ASSERT_EQUAL(THEME_DARK, validateThemeRaw(255));
 }
 
+// Failure mode: swapped case order → raw=0 returns THEME_LIGHT
+void test_validate_raw_0_is_dark() {
+    TEST_ASSERT_EQUAL_INT(THEME_DARK, (int)validateThemeRaw(0));
+}
+
+// Failure mode: swapped case order → raw=1 returns THEME_DARK
+void test_validate_raw_1_is_light() {
+    TEST_ASSERT_EQUAL_INT(THEME_LIGHT, (int)validateThemeRaw(1));
+}
+
+// Failure mode: missing default clause → raw=2 crashes or returns garbage
+void test_validate_raw_2_fallback_dark() {
+    TEST_ASSERT_EQUAL_INT(THEME_DARK, (int)validateThemeRaw(2));
+}
+
+// Failure mode: fallback returns THEME_LIGHT instead of THEME_DARK
+void test_validate_raw_255_fallback_dark() {
+    TEST_ASSERT_EQUAL_INT(THEME_DARK, (int)validateThemeRaw(255));
+}
+
 int main(int argc, char** argv) {
     UNITY_BEGIN();
     RUN_TEST(test_dark_bg_base);
@@ -91,5 +111,9 @@ int main(int argc, char** argv) {
     RUN_TEST(test_validate_raw_dark);
     RUN_TEST(test_validate_raw_light);
     RUN_TEST(test_validate_raw_out_of_range);
+    RUN_TEST(test_validate_raw_0_is_dark);
+    RUN_TEST(test_validate_raw_1_is_light);
+    RUN_TEST(test_validate_raw_2_fallback_dark);
+    RUN_TEST(test_validate_raw_255_fallback_dark);
     return UNITY_END();
 }
