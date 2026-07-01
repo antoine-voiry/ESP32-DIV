@@ -925,8 +925,17 @@ void beaconSpamLoop() {
         delay(50);
         break;
       }
-    } 
+    }
   }
+
+void teardown() {
+    spam = false;
+    esp_wifi_set_promiscuous(false);
+    esp_wifi_stop();
+    esp_wifi_deinit();
+    WiFi.mode(WIFI_OFF);
+}
+
 }
 
 
@@ -3488,12 +3497,25 @@ void deautherLoop() {
         last_status_time = current_time;
     }
   }
+
+void teardown() {
+    attack_running = false;
+    if (ap_list != nullptr) {
+        free(ap_list);
+        ap_list = nullptr;
+    }
+    esp_wifi_set_promiscuous(false);
+    esp_wifi_stop();
+    esp_wifi_deinit();
+    WiFi.mode(WIFI_OFF);
+}
+
 }
 
 
 /*
- * 
- * 
+ *
+ *
  * Firmware Update
  * 
  * 

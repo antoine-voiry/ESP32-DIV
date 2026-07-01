@@ -514,25 +514,27 @@ void handleWiFiSubmenuButtons() {
                 BeaconSpammer::beaconSpamLoop();        
                 if (isButtonPressed(BTN_SELECT)) {
                     in_sub_menu = true;
-                    is_main_menu = false; 
+                    is_main_menu = false;
                     submenu_initialized = false;
                     feature_active = false;
-                    feature_exit_requested = false; 
-                    displaySubmenu(); 
-                    delay(200);            
+                    feature_exit_requested = false;
+                    BeaconSpammer::teardown();
+                    displaySubmenu();
+                    delay(200);
                     while (isButtonPressed(BTN_SELECT)) {
                         delay(10); yield();
-                    }           
-                    break;  
+                    }
+                    break;
                 }
             }
             if (feature_exit_requested) {
                 in_sub_menu = true;
-                is_main_menu = false; 
+                is_main_menu = false;
                 submenu_initialized = false;
                 feature_active = false;
-                feature_exit_requested = false; 
-                displaySubmenu(); 
+                feature_exit_requested = false;
+                BeaconSpammer::teardown();
+                displaySubmenu();
                 delay(200);
             }
         }
@@ -541,33 +543,35 @@ void handleWiFiSubmenuButtons() {
             current_submenu_index = 2;
             in_sub_menu = true;
             feature_active = true;
-            feature_exit_requested = false; 
+            feature_exit_requested = false;
             Deauther::deautherSetup();  
             while (current_submenu_index == 2 && !feature_exit_requested) {  
                 current_submenu_index = 2;
                 in_sub_menu = true;
-                Deauther::deautherLoop();       
+                Deauther::deautherLoop();
                 if (isButtonPressed(BTN_SELECT)) {
                     in_sub_menu = true;
-                    is_main_menu = false; 
+                    is_main_menu = false;
                     submenu_initialized = false;
                     feature_active = false;
-                    feature_exit_requested = false; 
-                    displaySubmenu(); 
-                    delay(200);            
+                    feature_exit_requested = false;
+                    Deauther::teardown();
+                    displaySubmenu();
+                    delay(200);
                     while (isButtonPressed(BTN_SELECT)) {
                         delay(10); yield();
-                    }           
-                    break;  
+                    }
+                    break;
                 }
             }
             if (feature_exit_requested) {
                 in_sub_menu = true;
-                is_main_menu = false; 
+                is_main_menu = false;
                 submenu_initialized = false;
                 feature_active = false;
-                feature_exit_requested = false; 
-                displaySubmenu(); 
+                feature_exit_requested = false;
+                Deauther::teardown();
+                displaySubmenu();
                 delay(200);
             }
         }

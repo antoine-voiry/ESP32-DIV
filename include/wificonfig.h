@@ -56,6 +56,7 @@ namespace PacketMonitor {
 namespace BeaconSpammer {
   void beaconSpamSetup();
   void beaconSpamLoop();
+  void teardown();
 }
 
 namespace DeauthDetect {
@@ -77,6 +78,7 @@ namespace CaptivePortal {
 namespace Deauther {
   void deautherSetup();
   void deautherLoop();
+  void teardown();
 }
 
 namespace FirmwareUpdate {

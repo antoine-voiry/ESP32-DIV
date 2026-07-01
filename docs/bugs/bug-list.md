@@ -244,9 +244,10 @@ If it always reads `Released` regardless of button state, the hardware is the is
 
 ## BUG-011 — Beacon Spammer leaves WiFi in AP + promiscuous mode on exit
 
-**Status:** Open  
+**Status:** Fixed  
 **Severity:** High  
 **Reported:** 2026-06-30  
+**Fixed:** 2026-07-01  
 
 **Symptom:**  
 After exiting the Beacon Spammer feature, subsequent WiFi features (scanner, deauther, captive portal) behave erratically or fail to initialize. Phone Remote cannot start its AP.
@@ -270,9 +271,10 @@ WiFi.mode(WIFI_OFF);
 
 ## BUG-012 — Deauther leaves WiFi in AP mode on exit
 
-**Status:** Open  
+**Status:** Fixed  
 **Severity:** High  
 **Reported:** 2026-06-30  
+**Fixed:** 2026-07-01  
 
 **Symptom:**  
 Same class of issue as BUG-011. After exiting the Deauther, WiFi remains in AP mode, breaking subsequent WiFi feature initialization.
