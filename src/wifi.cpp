@@ -3500,10 +3500,7 @@ void deautherLoop() {
 
 void teardown() {
     attack_running = false;
-    if (ap_list != nullptr) {
-        free(ap_list);
-        ap_list = nullptr;
-    }
+    freeBuffer((void**)&ap_list);
     esp_wifi_set_promiscuous(false);
     esp_wifi_stop();
     esp_wifi_deinit();

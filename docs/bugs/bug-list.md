@@ -264,8 +264,11 @@ esp_wifi_deinit();
 WiFi.mode(WIFI_OFF);
 ```
 
-**Files:**  
-`src/wifi.cpp` ~841–950 (beaconSpamSetup / beaconSpamLoop exit path)
+**Fix:**  
+Added `BeaconSpammer::teardown()` in `src/wifi.cpp` — sets `spam = false`, then `esp_wifi_set_promiscuous(false)` → `esp_wifi_stop()` → `esp_wifi_deinit()` → `WiFi.mode(WIFI_OFF)`. Called on both exit paths (SELECT press and `feature_exit_requested`) in `src/main.cpp`. Declared in `include/wificonfig.h`.
+
+**Unit tests:**  
+Teardown body is entirely ESP32 WiFi API calls (hardware exception per CLAUDE.md §8 — no pure-logic branches to extract). No native unit tests added; validated by build + device.
 
 ---
 
@@ -280,13 +283,15 @@ WiFi.mode(WIFI_OFF);
 Same class of issue as BUG-011. After exiting the Deauther, WiFi remains in AP mode, breaking subsequent WiFi feature initialization.
 
 **Root cause:**  
-`deautherSetup()` calls `esp_wifi_init()`, `esp_wifi_set_mode(WIFI_MODE_AP)`, `esp_wifi_start()`. The cleanup block inside `deautherSetup()` only runs when initialization *fails*, not on normal exit. The normal exit path (SELECT / back) has no WiFi teardown.
+`deautherSetup()` calls `esp_wifi_init()`, `esp_wifi_set_mode(WIFI_MODE_AP)`, `esp_wifi_start()`. The cleanup block inside `deautherSetup()` only runs when initialization *fails*, not on normal exit. The normal exit path (SELECT / back) has no WiFi teardown. `ap_list` heap buffer also leaked on re-entry.
 
-**Fix direction:**  
-Same pattern as BUG-011 — add WiFi teardown on all exit paths of the Deauther feature.
+**Fix:**  
+Added `Deauther::teardown()` in `src/wifi.cpp` — sets `attack_running = false`, calls `freeBuffer((void**)&ap_list)` (extracted to `lib/logic/wifi_packet_logic.h`), then same WiFi deinit sequence as BUG-011. Called on both exit paths in `src/main.cpp`. Declared in `include/wificonfig.h`.
 
-**Files:**  
-`src/wifi.cpp` ~3345–3550 (deautherSetup / deautherLoop exit path)
+**Unit tests (2 added — `test/test_wifi_packet`):**  
+`freeBuffer` extracted to `lib/logic/` (only extractable branch — uses `<stdlib.h>` only):
+- `test_free_buffer_non_null_zeroes_pointer` — allocates buffer, calls freeBuffer, asserts pointer is null (catches double-free regression)
+- `test_free_buffer_null_is_noop` — null input must not crash (catches missing null-guard)
 
 ---
 

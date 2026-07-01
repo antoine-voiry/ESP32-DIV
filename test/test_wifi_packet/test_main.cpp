@@ -40,6 +40,22 @@ void test_single_element_above_display_height() {
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.4f, (float)computePacketGraphScale(counts, 1, 320.0));
 }
 
+// freeBuffer — BUG-012: null-guard before free on feature exit
+// Failure mode: double-free if null-check is absent (crash or heap corruption on re-entry)
+void test_free_buffer_non_null_zeroes_pointer() {
+    void* buf = malloc(16);
+    TEST_ASSERT_NOT_NULL(buf);
+    freeBuffer(&buf);
+    TEST_ASSERT_NULL(buf);
+}
+
+// Failure mode: calling freeBuffer on already-null pointer must be a no-op (no crash)
+void test_free_buffer_null_is_noop() {
+    void* buf = nullptr;
+    freeBuffer(&buf);  // must not crash
+    TEST_ASSERT_NULL(buf);
+}
+
 int main(int argc, char** argv) {
     UNITY_BEGIN();
     RUN_TEST(test_all_zeros_returns_one);
@@ -47,5 +63,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_max_at_last_index);
     RUN_TEST(test_all_equal_above_display_height);
     RUN_TEST(test_single_element_above_display_height);
+    RUN_TEST(test_free_buffer_non_null_zeroes_pointer);
+    RUN_TEST(test_free_buffer_null_is_noop);
     return UNITY_END();
 }
