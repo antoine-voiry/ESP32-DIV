@@ -2,6 +2,7 @@
 #include "arduino_progmem_shim.h"   // mock — defines PROGMEM as nothing for native builds
 #include "icon.h"
 #include "hal9000_bg.h"
+#include "hal9000_bg_rgb.h"
 #include "home_bg.h"
 
 // Expected sizes (compile-time constants used in assertions):
@@ -53,6 +54,13 @@ void test_loading_frame_8()  { TEST_ASSERT_EQUAL(LOADING_FRAME_BYTES, (int)sizeo
 void test_loading_frame_9()  { TEST_ASSERT_EQUAL(LOADING_FRAME_BYTES, (int)sizeof(bitmap_icon_hal9000_loading_9)); }
 void test_loading_frame_10() { TEST_ASSERT_EQUAL(LOADING_FRAME_BYTES, (int)sizeof(bitmap_icon_hal9000_loading_10)); }
 
+// ── HAL9000 background RGB565 array size guard ───────────────────────────────
+void test_hal9000_bg_rgb_pixel_count() {
+    // Guards against regenerating the array at wrong dimensions
+    TEST_ASSERT_EQUAL(HAL9000_BG_RGB_WIDTH * HAL9000_BG_RGB_HEIGHT,
+                      (int)(sizeof(hal9000_bg_rgb) / sizeof(uint16_t)));
+}
+
 // ── Regression: skull_* symbols must NOT exist (caught at compile time by absence)
 // If bitmap_icon_skull_wifi were re-introduced, this file would need to not compile.
 // We assert via the HAL9000 names instead — if a skull name crept back in and shadowed,
@@ -91,6 +99,8 @@ int main(int argc, char** argv) {
     RUN_TEST(test_loading_frame_8);
     RUN_TEST(test_loading_frame_9);
     RUN_TEST(test_loading_frame_10);
+
+    RUN_TEST(test_hal9000_bg_rgb_pixel_count);
 
     return UNITY_END();
 }

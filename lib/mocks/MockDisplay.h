@@ -11,6 +11,7 @@ struct MockDisplay : IDisplay {
     void    drawLine(int16_t, int16_t, int16_t, int16_t, uint16_t) override {}
     void    drawFastVLine(int16_t, int16_t, int16_t, uint16_t) override {}
     void    drawBitmap(int16_t, int16_t, const uint8_t*, int16_t, int16_t, uint16_t) override {}
+    void    pushImage(int16_t, int16_t, int16_t, int16_t, const uint16_t*) override {}
     void    setCursor(int16_t, int16_t) override {}
     void    setTextColor(uint16_t) override {}
     void    setTextColor(uint16_t, uint16_t) override {}

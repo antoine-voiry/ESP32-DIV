@@ -15,6 +15,7 @@
 #include "eeprom_layout.h"
 #include "icon.h"
 #include "hal9000_bg.h"
+#include "hal9000_bg_rgb.h"
 
 #include "hal/hal_globals.h"
 #include "hal/TftDisplay.h"
@@ -367,8 +368,8 @@ const uint16_t icon_colors[NUM_MENU_ITEMS] = {
         int hal9000X = (240 - HAL9000_BG_WIDTH) / 2;
         int hal9000Y = (320 - HAL9000_BG_HEIGHT) / 2;
 
-        // Draw HAL9000 eye in red
-        tft.drawBitmap(hal9000X, hal9000Y, hal9000_bg_bitmap, HAL9000_BG_WIDTH, HAL9000_BG_HEIGHT, 0xF800);
+        // Burst-transfer pre-packed RGB565 — replaces slow pixel-by-pixel drawBitmap (BUG-005)
+        tft.pushImage(hal9000X, hal9000Y, HAL9000_BG_RGB_WIDTH, HAL9000_BG_RGB_HEIGHT, hal9000_bg_rgb);
 
         for (int i = 0; i < NUM_MENU_ITEMS; i++) {
             int column = i / 4;

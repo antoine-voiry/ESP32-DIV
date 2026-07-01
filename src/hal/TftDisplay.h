@@ -15,6 +15,7 @@ public:
     void    drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t c) override { _tft.drawLine(x0,y0,x1,y1,c); }
     void    drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t c) override         { _tft.drawFastVLine(x,y,h,c); }
     void    drawBitmap(int16_t x, int16_t y, const uint8_t* bm, int16_t w, int16_t h, uint16_t c) override { _tft.drawBitmap(x,y,bm,w,h,c); }
+    void    pushImage(int16_t x, int16_t y, int16_t w, int16_t h, const uint16_t* data) override { _tft.pushImage(x, y, w, h, data); }
     void    setCursor(int16_t x, int16_t y) override                                    { _tft.setCursor(x,y); }
     void    setTextColor(uint16_t c) override                                            { _tft.setTextColor(c); }
     void    setTextColor(uint16_t fg, uint16_t bg) override                             { _tft.setTextColor(fg,bg); }

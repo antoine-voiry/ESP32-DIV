@@ -11,6 +11,8 @@ struct IDisplay {
     virtual void    drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) = 0;
     virtual void    drawBitmap(int16_t x, int16_t y, const uint8_t* bm,
                                int16_t w, int16_t h, uint16_t color) = 0;
+    virtual void    pushImage(int16_t x, int16_t y, int16_t w, int16_t h,
+                              const uint16_t* data) = 0;
     virtual void    setCursor(int16_t x, int16_t y) = 0;
     virtual void    setTextColor(uint16_t color) = 0;
     virtual void    setTextColor(uint16_t fgcolor, uint16_t bgcolor) = 0;
