@@ -48,6 +48,48 @@ inline int8_t ewmaRssi(volatile int16_t& smoothed, int8_t newSample) {
     return static_cast<int8_t>(smoothed);
 }
 
+// ── Proximity zone color constants (RGB565) ───────────────────────────────────
+// Hex values match PW_DIM / PW_GREEN / PW_YELLOW / PW_RED in proximity_wand.h.
+// Defined here so zoneColor() needs no TFT or Arduino headers.
+static constexpr uint16_t PROX_COLOR_NONE     = 0x4208;  // dark grey — no signal
+static constexpr uint16_t PROX_COLOR_LOW      = 0x07E0;  // green — distant
+static constexpr uint16_t PROX_COLOR_MODERATE = 0xFFE0;  // yellow — approaching
+static constexpr uint16_t PROX_COLOR_CRITICAL = 0xF800;  // red — close range
+
+// ── BLE hit-count → synthetic dBm proxy ──────────────────────────────────────
+// Maps packet hit-count in one PROX_RADIO_MS window to a synthetic dBm value.
+// 0 hits = -100 dBm (noise floor); 5+ hits = -40 dBm (very close).
+inline int8_t hitsToRssiProxy(uint8_t hits) {
+    if (hits == 0) return -100;
+    if (hits == 1) return -80;
+    if (hits == 2) return -65;
+    if (hits == 3) return -55;
+    if (hits == 4) return -47;
+    return -40;
+}
+
+// ── Zone → display color ──────────────────────────────────────────────────────
+inline uint16_t zoneColor(RssiZone z) {
+    switch (z) {
+        case ZONE_NONE:     return PROX_COLOR_NONE;
+        case ZONE_LOW:      return PROX_COLOR_LOW;
+        case ZONE_MODERATE: return PROX_COLOR_MODERATE;
+        case ZONE_CRITICAL: return PROX_COLOR_CRITICAL;
+    }
+    return PROX_COLOR_NONE;
+}
+
+// ── Zone → display label ──────────────────────────────────────────────────────
+inline const char* zoneLabel(RssiZone z) {
+    switch (z) {
+        case ZONE_NONE:     return "NO SIGNAL";
+        case ZONE_LOW:      return "DISTANT";
+        case ZONE_MODERATE: return "APPROACHING";
+        case ZONE_CRITICAL: return "CLOSE RANGE";
+    }
+    return "";
+}
+
 // ── OUI lookup ────────────────────────────────────────────────────────────────
 // Walks the OUI_TABLE (defined in proximity_wand.h, passed by caller).
 // On ESP32, PROGMEM const arrays live in flash; memcmp accesses them normally.

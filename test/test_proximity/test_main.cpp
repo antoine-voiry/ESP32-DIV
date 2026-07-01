@@ -159,6 +159,72 @@ void test_lookup_threat_flag_set() {
     TEST_ASSERT_TRUE(threat);
 }
 
+// ── hitsToRssiProxy adversarial tests ────────────────────────────────────────
+// Failure mode: off-by-one skips hits==0 branch (returns wrong floor)
+void test_hits_zero_returns_floor() {
+    TEST_ASSERT_EQUAL_INT8(-100, hitsToRssiProxy(0));
+}
+
+// Failure mode: first non-zero case skipped, falls through to -100
+void test_hits_one_returns_near_floor() {
+    TEST_ASSERT_EQUAL_INT8(-80, hitsToRssiProxy(1));
+}
+
+// Failure mode: hits==4 falls through to -40 (penultimate if missing)
+void test_hits_four_penultimate() {
+    TEST_ASSERT_EQUAL_INT8(-47, hitsToRssiProxy(4));
+}
+
+// Failure mode: 5+ case not reached; implementation stops at 4
+void test_hits_five_returns_max() {
+    TEST_ASSERT_EQUAL_INT8(-40, hitsToRssiProxy(5));
+}
+
+// Failure mode: large value triggers UB or wrong return
+void test_hits_large_saturates() {
+    TEST_ASSERT_EQUAL_INT8(-40, hitsToRssiProxy(255));
+}
+
+// ── zoneColor adversarial tests ───────────────────────────────────────────────
+// Failure mode: swapped case order in switch (ZONE_NONE returns wrong color)
+void test_zone_color_none() {
+    uint16_t result = 0xFFFF;  // poison: any wrong color caught
+    result = zoneColor(ZONE_NONE);
+    TEST_ASSERT_EQUAL_HEX16(PROX_COLOR_NONE, result);
+}
+
+void test_zone_color_low() {
+    TEST_ASSERT_EQUAL_HEX16(PROX_COLOR_LOW, zoneColor(ZONE_LOW));
+}
+
+void test_zone_color_moderate() {
+    TEST_ASSERT_EQUAL_HEX16(PROX_COLOR_MODERATE, zoneColor(ZONE_MODERATE));
+}
+
+void test_zone_color_critical() {
+    TEST_ASSERT_EQUAL_HEX16(PROX_COLOR_CRITICAL, zoneColor(ZONE_CRITICAL));
+}
+
+// ── zoneLabel adversarial tests ───────────────────────────────────────────────
+// Failure mode: swapped label strings (ZONE_NONE returns "DISTANT" etc.)
+void test_zone_label_none() {
+    const char* result = "WRONG";  // poison to catch uninitialized/wrong return
+    result = zoneLabel(ZONE_NONE);
+    TEST_ASSERT_EQUAL_STRING("NO SIGNAL", result);
+}
+
+void test_zone_label_low() {
+    TEST_ASSERT_EQUAL_STRING("DISTANT", zoneLabel(ZONE_LOW));
+}
+
+void test_zone_label_moderate() {
+    TEST_ASSERT_EQUAL_STRING("APPROACHING", zoneLabel(ZONE_MODERATE));
+}
+
+void test_zone_label_critical() {
+    TEST_ASSERT_EQUAL_STRING("CLOSE RANGE", zoneLabel(ZONE_CRITICAL));
+}
+
 int main(int argc, char** argv) {
     UNITY_BEGIN();
     RUN_TEST(test_classify_none_deep);
@@ -188,5 +254,18 @@ int main(int argc, char** argv) {
     RUN_TEST(test_lookup_empty_table_returns_false);
     RUN_TEST(test_lookup_found_at_second_entry);
     RUN_TEST(test_lookup_threat_flag_set);
+    RUN_TEST(test_hits_zero_returns_floor);
+    RUN_TEST(test_hits_one_returns_near_floor);
+    RUN_TEST(test_hits_four_penultimate);
+    RUN_TEST(test_hits_five_returns_max);
+    RUN_TEST(test_hits_large_saturates);
+    RUN_TEST(test_zone_color_none);
+    RUN_TEST(test_zone_color_low);
+    RUN_TEST(test_zone_color_moderate);
+    RUN_TEST(test_zone_color_critical);
+    RUN_TEST(test_zone_label_none);
+    RUN_TEST(test_zone_label_low);
+    RUN_TEST(test_zone_label_moderate);
+    RUN_TEST(test_zone_label_critical);
     return UNITY_END();
 }

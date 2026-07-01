@@ -105,17 +105,6 @@ static uint8_t  nrfChannel  = 0;  // index into BLE_CHANNELS[]
 static const uint8_t BLE_CHANNELS[]   = {2, 26, 80};
 static const uint8_t N_BLE_CHANNELS   = 3;
 
-// Maps hit-count in one PROX_RADIO_MS window to a synthetic dBm value.
-// 0 hits = -100 dBm (floor); 5+ hits = -40 dBm (close).
-static int8_t hitsToRssiProxy(uint8_t hits) {
-    if (hits == 0) return -100;
-    if (hits == 1) return -80;
-    if (hits == 2) return -65;
-    if (hits == 3) return -55;
-    if (hits == 4) return -47;
-    return -40;  // 5+
-}
-
 static void pollNRF24() {
     // Hop to next BLE channel each poll cycle.
     nrfChannel = (nrfChannel + 1) % N_BLE_CHANNELS;
@@ -160,26 +149,6 @@ static void pollNRF24() {
 
 static int8_t  lastRenderedRssi = -127;  // force first full redraw
 static uint8_t lastZone         = 0xFF;
-
-static uint16_t zoneColor(RssiZone z) {
-    switch (z) {
-        case ZONE_NONE:     return PW_DIM;
-        case ZONE_LOW:      return PW_GREEN;
-        case ZONE_MODERATE: return PW_YELLOW;
-        case ZONE_CRITICAL: return PW_RED;
-    }
-    return PW_DIM;
-}
-
-static const char* zoneLabel(RssiZone z) {
-    switch (z) {
-        case ZONE_NONE:     return "NO SIGNAL";
-        case ZONE_LOW:      return "DISTANT";
-        case ZONE_MODERATE: return "APPROACHING";
-        case ZONE_CRITICAL: return "CLOSE RANGE";
-    }
-    return "";
-}
 
 static void renderHeader() {
     tft.fillRect(0, 0, 240, 34, PW_BG);
