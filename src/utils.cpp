@@ -571,7 +571,7 @@ void terminalSetup() {
 }
 
 void terminalLoop() {
-  
+
   runUI();
 
   if (terminalActive) {
@@ -590,4 +590,11 @@ void terminalLoop() {
       }
     }
   }
+}
+
+bool isTouchLeft() {
+    if (!ts.touched()) return false;
+    TS_Point p = ts.getPoint();
+    int x = map(p.x, TS_MINX, TS_MAXX, 0, 239);
+    return x < 40;
 }

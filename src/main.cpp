@@ -2087,7 +2087,7 @@ void themeToggleLoop() {
     displayThemeScreen();
 
     while (!feature_exit_requested) {
-        if (isButtonPressed(BTN_LEFT) || isButtonPressed(BTN_RIGHT)) {
+        if ((isButtonPressed(BTN_LEFT) || isTouchLeft()) || isButtonPressed(BTN_RIGHT)) {
             ThemeID next = (currentThemeID == THEME_DARK) ? THEME_LIGHT : THEME_DARK;
             applyTheme(next);
             displayThemeScreen();
@@ -2137,7 +2137,7 @@ void brightnessControlLoop() {
     displayBrightnessControl();
 
     while (!feature_exit_requested) {
-        if (isButtonPressed(BTN_LEFT)) {
+        if (isButtonPressed(BTN_LEFT) || isTouchLeft()) {
             brightness_level = max(10, brightness_level - 25);
             analogWrite(4, brightness_level);  // TFT_BL is pin 4
             displayBrightnessControl();
@@ -2200,7 +2200,7 @@ void screenTimeoutLoop() {
     }
 
     while (!feature_exit_requested) {
-        if (isButtonPressed(BTN_LEFT)) {
+        if (isButtonPressed(BTN_LEFT) || isTouchLeft()) {
             current_option = max(0, current_option - 1);
             screen_timeout_seconds = timeout_options[current_option];
             displayScreenTimeout();
@@ -2322,7 +2322,7 @@ void webUIPhoneRemoteScreen() {
             redraw();
             delay(300);
         }
-        if (isButtonPressed(BTN_LEFT)) {
+        if (isButtonPressed(BTN_LEFT) || isTouchLeft()) {
             Preferences prefs; prefs.begin("webui", false);
             uint8_t cur = prefs.getUChar("mode", 0);
             prefs.putUChar("mode", cur == 0 ? 1 : 0);
@@ -3171,9 +3171,9 @@ void handleButtons() {
             delay(200);
         }
 
-        if (isButtonPressed(BTN_LEFT) && !is_main_menu) {
-            int row = current_menu_index % 4; 
-            if (current_menu_index >= 4) { 
+        if ((isButtonPressed(BTN_LEFT) || isTouchLeft()) && !is_main_menu) {
+            int row = current_menu_index % 4;
+            if (current_menu_index >= 4) {
                 current_menu_index = row; 
             } else if (current_menu_index == 0) { 
                 current_menu_index = 3; 

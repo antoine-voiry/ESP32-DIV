@@ -32,4 +32,6 @@ namespace Terminal {
   void terminalLoop();
 }
 
+bool isTouchLeft();
+
 #endif
