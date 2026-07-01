@@ -1679,6 +1679,13 @@ void handleNRFSubmenuButtons() {
 }
 
 
+static void drawCC1101AbsentBanner() {
+    tft.fillRect(0, 0, 240, 22, STATUS_ERR);
+    tft.setTextColor(TFT_WHITE, STATUS_ERR);
+    tft.setTextFont(2);
+    tft.drawString("CC1101 NOT DETECTED", 10, 4, 2);
+}
+
 void handleSubGHzSubmenuButtons() {
     if (isButtonPressed(BTN_UP)) {
         current_submenu_index = (current_submenu_index - 1 + active_submenu_size) % active_submenu_size;
@@ -1687,6 +1694,7 @@ void handleSubGHzSubmenuButtons() {
         }
         last_interaction_time = millis();
         displaySubmenu();
+        if (!gSubGhz->isPresent()) drawCC1101AbsentBanner();
         delay(200);
     }
 
@@ -1697,12 +1705,18 @@ void handleSubGHzSubmenuButtons() {
         }
         last_interaction_time = millis();
         displaySubmenu();
+        if (!gSubGhz->isPresent()) drawCC1101AbsentBanner();
         delay(200);
     }
 
     if (isButtonPressed(BTN_SELECT)) {
         last_interaction_time = millis();
         delay(200);
+
+        if (!gSubGhz->isPresent() && current_submenu_index != 4) {
+            drawCC1101AbsentBanner();
+            return;
+        }
 
         if (current_submenu_index == 4) {
             in_sub_menu = false;
@@ -3194,6 +3208,9 @@ void handleButtons() {
                 in_sub_menu = true;
                 submenu_initialized = false;
                 displaySubmenu();
+                if (current_menu_index == 3 && !gSubGhz->isPresent()) {
+                    drawCC1101AbsentBanner();
+                }
             }
 
             if (is_main_menu) {
@@ -3285,6 +3302,10 @@ void setup() {
     gNrf3    = &halNrf3;
 
   Serial.begin(115200);
+  gSubGhz->init();
+  if (!gSubGhz->isPresent()) {
+      Serial.println("[CC1101] not detected — SubGHz disabled");
+  }
 
   EEPROM.begin(EEPROM_TOTAL_SIZE);
   loadThemeFromEEPROM();   // must run before any tft color usage
