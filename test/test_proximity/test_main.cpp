@@ -110,6 +110,55 @@ void test_lookup_vendor_truncated_and_terminated() {
     TEST_ASSERT_EQUAL_CHAR('\0', vendor[15]);
 }
 
+// ── lookupOui adversarial tests ───────────────────────────────────────────────
+
+// Failure mode: vendorOut or *threatOut left uninitialized on miss
+void test_lookup_not_found_clears_outputs() {
+    OuiEntry table[1] = {{{0xAA, 0xBB, 0xCC}, "Vendor", false}};
+    uint8_t mac[3]  = {0x11, 0x22, 0x33};
+    char    vendor[16] = "GARBAGE";   // pre-fill to catch uncleared output
+    bool    threat = true;             // pre-set to catch uncleared flag
+    bool found = lookupOui(mac, table, 1, vendor, &threat);
+    TEST_ASSERT_FALSE(found);
+    TEST_ASSERT_EQUAL_CHAR('\0', vendor[0]);
+    TEST_ASSERT_FALSE(threat);
+}
+
+// Failure mode: loop bounds < vs <= → entryCount=0 crashes or skips
+void test_lookup_empty_table_returns_false() {
+    char    vendor[16] = {};
+    bool    threat = false;
+    uint8_t mac[3] = {0x01, 0x02, 0x03};
+    bool found = lookupOui(mac, nullptr, 0, vendor, &threat);
+    TEST_ASSERT_FALSE(found);
+    TEST_ASSERT_EQUAL_CHAR('\0', vendor[0]);
+}
+
+// Failure mode: early-exit after index 0 → never searches index 1+
+void test_lookup_found_at_second_entry() {
+    OuiEntry table[2] = {
+        {{0xAA, 0xBB, 0xCC}, "First",  false},
+        {{0x00, 0x1A, 0x2B}, "Second", false},
+    };
+    uint8_t mac[3] = {0x00, 0x1A, 0x2B};
+    char    vendor[16] = {};
+    bool    threat = false;
+    bool found = lookupOui(mac, table, 2, vendor, &threat);
+    TEST_ASSERT_TRUE(found);
+    TEST_ASSERT_EQUAL_STRING("Second", vendor);
+}
+
+// Failure mode: threat flag never written → always returns false
+void test_lookup_threat_flag_set() {
+    OuiEntry table[1] = {{{0xDE, 0xAD, 0xBE}, "EvilCorp", true}};
+    uint8_t mac[3] = {0xDE, 0xAD, 0xBE};
+    char    vendor[16] = {};
+    bool    threat = false;
+    bool found = lookupOui(mac, table, 1, vendor, &threat);
+    TEST_ASSERT_TRUE(found);
+    TEST_ASSERT_TRUE(threat);
+}
+
 int main(int argc, char** argv) {
     UNITY_BEGIN();
     RUN_TEST(test_classify_none_deep);
@@ -135,5 +184,9 @@ int main(int argc, char** argv) {
     RUN_TEST(test_lookup_found_threat_entry);
     RUN_TEST(test_lookup_not_found_clears_output);
     RUN_TEST(test_lookup_vendor_truncated_and_terminated);
+    RUN_TEST(test_lookup_not_found_clears_outputs);
+    RUN_TEST(test_lookup_empty_table_returns_false);
+    RUN_TEST(test_lookup_found_at_second_entry);
+    RUN_TEST(test_lookup_threat_flag_set);
     return UNITY_END();
 }
