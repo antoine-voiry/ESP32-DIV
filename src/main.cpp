@@ -1104,28 +1104,30 @@ void handleBluetoothSubmenuButtons() {
             while (current_submenu_index == 4 && !feature_exit_requested) {  
                 current_submenu_index = 4;
                 in_sub_menu = true;
-                BleScan::bleScanLoop();        
+                BleScan::bleScanLoop();
                 if (isButtonPressed(BTN_SELECT)) {
                     in_sub_menu = true;
-                    is_main_menu = false; 
+                    is_main_menu = false;
                     submenu_initialized = false;
                     feature_active = false;
-                    feature_exit_requested = false; 
-                    displaySubmenu(); 
-                    delay(200);            
+                    feature_exit_requested = false;
+                    BleScan::teardown();
+                    displaySubmenu();
+                    delay(200);
                     while (isButtonPressed(BTN_SELECT)) {
                         delay(10); yield();
-                    }           
-                    break;  
+                    }
+                    break;
                 }
             }
             if (feature_exit_requested) {
                 in_sub_menu = true;
-                is_main_menu = false; 
+                is_main_menu = false;
                 submenu_initialized = false;
                 feature_active = false;
-                feature_exit_requested = false; 
-                displaySubmenu(); 
+                feature_exit_requested = false;
+                BleScan::teardown();
+                displaySubmenu();
                 delay(200);
             }
         }
@@ -1304,28 +1306,30 @@ void handleBluetoothSubmenuButtons() {
                     while (current_submenu_index == 4 && !feature_exit_requested) {  
                         current_submenu_index = 4;
                         in_sub_menu = true;
-                        BleScan::bleScanLoop();        
+                        BleScan::bleScanLoop();
                         if (isButtonPressed(BTN_SELECT)) {
                             in_sub_menu = true;
-                            is_main_menu = false; 
+                            is_main_menu = false;
                             submenu_initialized = false;
                             feature_active = false;
-                            feature_exit_requested = false; 
-                            displaySubmenu(); 
-                            delay(200);            
+                            feature_exit_requested = false;
+                            BleScan::teardown();
+                            displaySubmenu();
+                            delay(200);
                             while (isButtonPressed(BTN_SELECT)) {
                                 delay(10); yield();
-                    }           
-                            break;  
+                            }
+                            break;
                         }
                     }
                     if (feature_exit_requested) {
                         in_sub_menu = true;
-                        is_main_menu = false; 
+                        is_main_menu = false;
                         submenu_initialized = false;
                         feature_active = false;
-                        feature_exit_requested = false; 
-                        displaySubmenu(); 
+                        feature_exit_requested = false;
+                        BleScan::teardown();
+                        displaySubmenu();
                         delay(200);
                     }
                 }
@@ -2316,6 +2320,7 @@ void webUIPhoneRemoteScreen() {
 
     feature_exit_requested = false;
     while (!feature_exit_requested) {
+        WebUIService::loop();
         if (isButtonPressed(BTN_UP)) {
             if (!WebUIService::isActive()) WebUIService::setup();
             redraw();

@@ -42,44 +42,42 @@ Extracted threshold logic to `computeTempStatus(float tempC)` in `lib/logic/batt
 
 ## BUG-002 — WebUI buttons do nothing (WS commands not processed)
 
-**Status:** Open  
+**Status:** Fixed  
 **Severity:** High  
 **Reported:** 2026-06-28  
+**Fixed:** 2026-07-02  
 **Affected firmware:** HEAD (post-WebUI branch)
 
-**Symptom:**  
-WebUI loads at `192.168.4.1`, tabs navigate, WS handshake returns `101 Switching Protocols`, but tapping any tool launch button has no effect — no TFT response, no `tool_started` event. STOP and STATUS buttons also unresponsive.
+**Root cause (confirmed same as BUG-010):**  
+`WebUIService::loop()` — which consumes `pendingCat`/`pendingItem` set by `onWsEvent` — was never called while inside `webUIPhoneRemoteScreen()`'s blocking `while (!feature_exit_requested)` loop. The WS message arrived on Core 0 (AsyncWebServer task), set `pendingCat`, but no call to `WebUIService::loop()` on Core 1 ever consumed it.
 
-**Confirmed:**  
-- HTTP `GET /` → 200 OK, 3111 bytes (gzip payload correct)  
-- WS upgrade to `/ws` → 101 Switching Protocols  
-- Properly masked WS text frames sent → no response from device
+**Fix:**  
+Added `WebUIService::loop()` as the first call inside `webUIPhoneRemoteScreen()`'s while loop (see BUG-010). WS parsing logic extracted to `lib/logic/webui_logic.h` as `parseWsAction()`.
 
-**Suspected cause (to investigate):**  
-Unknown. WS connects but `onWsEvent` may not be firing, or `WebUIService::loop()` may not be processing `pendingCat`. Needs caveman Serial debug:  
-1. Print in `onWsEvent` on `WS_EVT_DATA` to confirm callback fires  
-2. Print `pendingCat` value in `WebUIService::loop()` to confirm it's being set  
-
-**Debug approach already staged:**  
-`webui.cpp onWsEvent` — add `Serial.print("[WS]type="); Serial.println(type);` on entry, and `Serial.print("[WS]pendingCat="); Serial.println(pendingCat);` after action parsing. Then monitor serial while sending a WS frame from the phone.
+**Unit tests (11 added — `test/test_webui`):**  
+`parseWsAction()` extracted from `onWsEvent` — all 3 action types + 6 failure modes:
+- launch with valid cat/item, subghz cat=3 item=0, stop, status
+- unknown action → NONE, missing action key → NONE
+- launch without category → NONE, launch without item → NONE
+- null buf → NONE, empty buf → NONE, item boundary=5
 
 ---
 
 ## BUG-010 — Phone remote: Start Server fails silently
 
-**Status:** Open  
+**Status:** Fixed  
 **Severity:** High  
 **Reported:** 2026-06-30  
+**Fixed:** 2026-07-02  
 
-**Symptom:**  
-Pressing UP on the Phone Remote screen to start the server has no visible effect — screen continues to show "Server: stopped" after the key press.
+**Root cause:**  
+`webUIPhoneRemoteScreen()` has a blocking `while (!feature_exit_requested)` loop that never called `WebUIService::loop()`. WS messages arrived (Core 0) and set `pendingCat`, but `loop()` (Core 1) was never called to consume and dispatch them. Also: WiFi state left dirty by prior features (now fixed by BUG-011/012 teardowns).
 
-**Suspected causes (two independent issues):**  
-1. **WiFi state conflict** — If any WiFi feature (scanner, deauther, beacon spammer) was used before navigating to Phone Remote, the WiFi stack may be in STA or scan mode. `WebUIService::setup()` starts an AP, which requires `WiFi.softAP()`. If the driver is still in STA mode from a prior feature, `softAP()` silently fails and `isActive()` returns false. `WebUIService::setup()` has no return value or error path, so failure is invisible.  
-2. **`WebUIService::loop()` not called** — `webUIPhoneRemoteScreen()` runs its own blocking `while (!feature_exit_requested)` loop (utils.cpp). `WebUIService::loop()` in `main.cpp::loop()` is never reached while inside this blocking loop. Even if the AP starts, WebSocket message processing is stalled until the user exits the screen — meaning any browser-side button press goes unprocessed.
+**Fix:**  
+Added `WebUIService::loop()` as first call inside `webUIPhoneRemoteScreen()`'s while loop in `src/main.cpp`. This also resolves BUG-002 — the same root cause.
 
-**Files:**  
-`src/main.cpp` ~2299 (`webUIPhoneRemoteScreen` blocking loop), `src/webui.cpp` (`WebUIService::setup`)
+**Unit tests:**  
+WS parsing logic extracted from `onWsEvent` to `lib/logic/webui_logic.h::parseWsAction()` with 11 tests (see BUG-002).
 
 ---
 
@@ -125,21 +123,28 @@ Proximity Wand briefly shows a detected network/signal, then immediately reverts
 
 ## BUG-007 — SD card icon always red
 
-**Status:** Open  
+**Status:** Partially Fixed  
 **Severity:** High  
 **Reported:** 2026-06-30  
+**Partially fixed:** 2026-07-02  
 
 **Root cause (two compounding issues):**
 
-1. **GPIO 5 shared between SD_CS and NRF24 radio3 CSN** — `SD_CS_PIN = 5` (`src/wifi.cpp:3508`). NRF24 radio3 also uses GPIO 5 as its CSN. `wifi.cpp` documents this explicitly: `cleanupSD()` releases GPIO 5 before NRF24 operations (`src/wifi.cpp:15-29`). NRF24 is initialized at startup and keeps GPIO 5 as an SPI output. As a result, `SD.begin()` in `isSDCardAvailable()` cannot successfully claim GPIO 5 while NRF24 is active — which is essentially always. The SD card is structurally unavailable after boot on the current pin configuration.
+1. **`SD.begin()` called on every status bar update** — `isSDCardAvailable()` (`src/utils.cpp:178`) calls `SD.begin()` unconditionally every 1000ms. `SD.begin()` returns `false` on an already-mounted card, so the icon was always red regardless of actual SD state.
 
-2. **`SD.begin()` called on every status bar update** — `isSDCardAvailable()` (`src/utils.cpp:178`) calls `SD.begin()` unconditionally every 1000ms via `updateStatusBar()`. Even without the GPIO 5 conflict, `SD.begin()` returns `false` on an already-mounted card, so the icon would always be red regardless.
+2. **GPIO 5 shared between SD_CS and NRF24 radio3 CSN** — `SD_CS_PIN = 5`. NRF24 radio3 also uses GPIO 5. `cleanupSD()` releases GPIO 5 before NRF24 ops. SD card is unavailable while NRF24 holds GPIO 5. This is a **hardware-level conflict** — cannot be fully resolved in firmware alone.
 
-**Fix direction:**  
-Short term: cache the mount result with a `static bool`; call `SD.begin(SD_CS_PIN)` once with explicit CS pin, reclaiming GPIO 5 from NRF24 first (or after NRF24 teardown). Long term: the SD and NRF24 pin sharing must be resolved at the hardware or SPI multiplexing level.
+**Fix (issue 1):**  
+`isSDCardAvailable()` now uses `SD.cardType() != CARD_NONE` as a non-destructive mount check. Only calls `SD.begin(5)` when not already mounted. After `SD.end()` (called by `cleanupSD()`), `cardType()` returns `CARD_NONE` so re-mount is attempted correctly.
+
+**Remaining (issue 2):**  
+GPIO 5 sharing with NRF24 is unresolved — SD card will show unavailable while BLE Jammer or Scanner holds GPIO 5 via NRF24. Long-term fix requires hardware rework or SPI multiplexing.
+
+**Unit tests:**  
+`isSDCardAvailable()` calls `SD.cardType()` and `SD.begin()` — hardware exception. No native tests.
 
 **Files:**  
-`src/utils.cpp:177`, `src/wifi.cpp:3508` (`SD_CS_PIN`), `src/wifi.cpp:15` (`cleanupSD`)
+`src/utils.cpp:177` (fixed), `src/wifi.cpp:3508` (`SD_CS_PIN`), `src/wifi.cpp:22` (`cleanupSD`)
 
 ---
 
@@ -297,9 +302,10 @@ Added `Deauther::teardown()` in `src/wifi.cpp` — sets `attack_running = false`
 
 ## BUG-013 — BLE Scan resources not freed on exit
 
-**Status:** Open  
+**Status:** Fixed  
 **Severity:** Medium  
 **Reported:** 2026-06-30  
+**Fixed:** 2026-07-02  
 
 **Symptom:**  
 Rapidly entering and exiting BLE Scan causes increasing heap fragmentation. BLE stack remains active after exit, potentially conflicting with other BLE features (BLE Jammer, Sour Apple, BLE Sniffer).
@@ -307,8 +313,11 @@ Rapidly entering and exiting BLE Scan causes increasing heap fragmentation. BLE 
 **Root cause:**  
 `bleScanSetup()` calls `BLEDevice::init("")` and `bleScan->setActiveScan(true)`. There is no corresponding `bleScan->stop()` / `BLEDevice::deinit()` on exit. By contrast, `blesnifferCleanup()` (`src/bluetooth.cpp:4752`) does properly clean up — BLE Scan is inconsistent with this pattern.
 
-**Files:**  
-`src/bluetooth.cpp` ~1524–1540 (bleScanSetup / bleScanLoop)
+**Fix:**  
+Added `BleScan::teardown()` in `src/bluetooth.cpp` — calls `bleScan->stop()`, `bleScan->clearResults()`, sets `bleScan = nullptr`, then `BLEDevice::deinit(false)`. Called on both exit paths in both BleScan call sites in `src/main.cpp` (4 paths total). Declared in `include/bleconfig.h`.
+
+**Unit tests:**  
+Teardown body is entirely BLE SDK calls — hardware exception per CLAUDE.md §8. Null-guard pattern already covered by `test_free_buffer_null_is_noop` (BUG-012). No additional native tests needed.
 
 ---
 
@@ -347,3 +356,122 @@ Multiple occurrences throughout `handleButtons()` and submenu handlers.
 
 **Files:**  
 `src/main.cpp` — multiple locations in submenu and feature exit paths
+
+---
+
+## BUG-016 — PacketMonitor leaves WiFi in promiscuous mode on exit
+
+**Status:** Open  
+**Severity:** High  
+**Reported:** 2026-07-02  
+
+**Symptom:**  
+After exiting Packet Monitor, subsequent WiFi features fail to initialize — WiFi stack remains running in promiscuous mode. Same class as BUG-011/012.
+
+**Root cause:**  
+`PacketMonitor::ptmSetup()` calls `esp_wifi_init()`, `esp_wifi_set_promiscuous(true)`. No `teardown()` exists. Exit via `feature_exit_requested` (line ~322) returns to submenu with WiFi + promiscuous mode still active.
+
+**Files:**  
+`src/wifi.cpp` ~37–452 (PacketMonitor namespace)
+
+---
+
+## BUG-017 — CaptivePortal leaves WiFi AP + DNS + WebServer running on exit
+
+**Status:** Open  
+**Severity:** High  
+**Reported:** 2026-07-02  
+
+**Symptom:**  
+After exiting CaptivePortal, the fake AP stays visible to nearby clients, DNS server continues responding, and the WebServer remains active — consuming heap and radio.
+
+**Root cause:**  
+`cportalSetup()` calls `WiFi.softAP()`, `dnsServer.start()`, `server.begin()`. `stopAttack()` exists but is only called internally (on portal timeout), not on user-initiated exit. `EEPROM.begin()` called in setup without `EEPROM.end()`. Exit via `feature_exit_requested` calls no cleanup.
+
+**Files:**  
+`src/wifi.cpp` ~1777–2574 (CaptivePortal namespace)
+
+---
+
+## BUG-018 — BleSpoofer leaves BLE device initialized on exit
+
+**Status:** Open  
+**Severity:** High  
+**Reported:** 2026-07-02  
+
+**Symptom:**  
+Exiting BLE Spoofer leaves `BLEDevice` initialized and advertising. Re-entering any BLE feature that calls `BLEDevice::init()` after an existing init can cause a crash or undefined behavior.
+
+**Root cause:**  
+`BleSpoofer::bleSpooferSetup()` calls `BLEDevice::init("AirPods 69")`. No `BLEDevice::deinit()` on exit. Exit via `feature_exit_requested` returns to submenu with BLE stack active.
+
+**Files:**  
+`src/bluetooth.cpp` ~54–658 (BleSpoofer namespace)
+
+---
+
+## BUG-019 — SourApple leaves BLE device initialized on exit
+
+**Status:** Open  
+**Severity:** High  
+**Reported:** 2026-07-02  
+
+**Symptom:**  
+Same class as BUG-018. Exiting Sour Apple leaves BLE device initialized and advertising Apple BLE spam frames.
+
+**Root cause:**  
+`sourappleSetup()` calls `BLEDevice::init("")`. No `BLEDevice::deinit()` on exit.
+
+**Files:**  
+`src/bluetooth.cpp` ~668–899 (SourApple namespace)
+
+---
+
+## BUG-020 — DeauthDetect leaks FreeRTOS semaphore on exit
+
+**Status:** Open  
+**Severity:** Medium  
+**Reported:** 2026-07-02  
+
+**Symptom:**  
+Repeated entry/exit of DeauthDetect leaks one semaphore handle (4–8 bytes) per session. Over many cycles this fragments the heap.
+
+**Root cause:**  
+`deauthdetectSetup()` creates a mutex via `xSemaphoreCreateMutex()` stored in `tftSemaphore`. `deauthdetectLoop()` deletes the FreeRTOS scan/UI tasks on exit but never calls `vSemaphoreDelete(tftSemaphore)`.
+
+**Files:**  
+`src/wifi.cpp` ~939–1347 (DeauthDetect namespace)
+
+---
+
+## BUG-021 — BleJammer leaves NRF24 radios powered on exit
+
+**Status:** Open  
+**Severity:** Medium  
+**Reported:** 2026-07-02  
+
+**Symptom:**  
+After exiting BLE Jammer, the three NRF24 radios remain powered and transmitting. SPI bus and GPIO 5 are left in active state, blocking SD card access.
+
+**Root cause:**  
+`bleJammerSetup()` calls `radio1.begin()`, `radio2.begin()`, `radio3.begin()`. No explicit `radio.powerDown()` on exit path; `initializeRadios()` calls powerDown only when `jammerActive=false` during active jamming, not guaranteed on SELECT-exit.
+
+**Files:**  
+`src/bluetooth.cpp` ~908–1194 (BleJammer namespace)
+
+---
+
+## BUG-022 — FirmwareUpdate leaves WiFi connected on exit
+
+**Status:** Open  
+**Severity:** High  
+**Reported:** 2026-07-02  
+
+**Symptom:**  
+After using OTA firmware update via WiFi, the STA connection remains active. Subsequent features that call `esp_wifi_init()` crash because WiFi is already initialized.
+
+**Root cause:**  
+`performWebOTAUpdate()` calls `WiFi.begin()` for STA mode. No teardown on feature exit (line ~3885 `feature_exit_requested`). Also: `new NetworkInfo[numNetworks]` allocated in `selectWiFiNetwork()` is only freed on success path — early returns leak the array.
+
+**Files:**  
+`src/wifi.cpp` ~3521–end (FirmwareUpdate namespace)

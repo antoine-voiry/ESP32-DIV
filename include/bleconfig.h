@@ -60,6 +60,7 @@ namespace SourApple {
 namespace BleScan {
   void bleScanSetup();
   void bleScanLoop();
+  void teardown();
 }
 
 namespace Scanner {

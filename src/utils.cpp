@@ -173,9 +173,11 @@ float readInternalTemperature() {
   return ((raw - 32) / 1.8);
 }
 
-// Check if SD card is available
+// Check if SD card is available — use cardType() to avoid re-mounting an already-mounted card.
+// SD.begin() on an already-mounted card returns false (BUG-007).
 bool isSDCardAvailable() {
-  return SD.begin();
+  if (SD.cardType() != CARD_NONE) return true;
+  return SD.begin(5);
 }
 
 void drawStatusBar(float batteryVoltage, bool forceUpdate) {

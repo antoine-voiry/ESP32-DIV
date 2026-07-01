@@ -51,6 +51,40 @@ You operate as a Senior Core Firmware Engineer. Your objective is absolute code 
 - Wrap all peripheral init declarations with `ESP_ERROR_CHECK()` assertions.
 - Tag fast-execution critical routines with the explicit `IRAM_ATTR` qualifier.
 
+### [SKILL: Audit Resource Lifecycle]
+
+*When adding a feature, reviewing a bug fix, or any time `setup()`/`init()` is touched:*
+
+For every feature namespace, verify the following resources are released on **all** exit paths (`feature_exit_requested`, SELECT press, internal break, early return):
+
+| Resource | Init call | Required teardown |
+|----------|-----------|-------------------|
+| WiFi stack | `esp_wifi_init()` | `esp_wifi_stop()` → `esp_wifi_deinit()` → `WiFi.mode(WIFI_OFF)` |
+| WiFi promiscuous | `esp_wifi_set_promiscuous(true)` | `esp_wifi_set_promiscuous(false)` before `esp_wifi_stop()` |
+| WiFi AP | `WiFi.softAP()` | `WiFi.softAPdisconnect(true)` or `WiFi.mode(WIFI_OFF)` |
+| DNS server | `dnsServer.start()` | `dnsServer.stop()` |
+| Async Web server | `server.begin()` | `server.end()` |
+| BLE device | `BLEDevice::init()` | `BLEDevice::deinit(false)` |
+| BLE scan | `bleScan->start()` | `bleScan->stop()` → `bleScan->clearResults()` → `bleScan = nullptr` |
+| NRF24 radio | `radio.begin()` | `radio.powerDown()` |
+| CC1101 radio | `ELECHOUSE_cc1101.Init()` | `ELECHOUSE_cc1101.setSidle()` |
+| RCSwitch interrupt | `mySwitch.enableReceive()` | `mySwitch.disableReceive()` |
+| Heap buffer | `malloc()` / `new` | `free()` / `delete` — use `freeBuffer(void** ptr)` from `wifi_packet_logic.h` |
+| FreeRTOS task | `xTaskCreatePinnedToCore()` | `vTaskDelete(handle)` |
+| FreeRTOS semaphore | `xSemaphoreCreateMutex()` | `vSemaphoreDelete(handle)` |
+| SD card | `SD.begin()` | Call only once via `SD.cardType() != CARD_NONE` guard; `SD.end()` on explicit unmount |
+| SPI bus | `SPI.begin()` / CS LOW | `DEASSERT_SPI_BUS()` macro — all 4 CS lines HIGH before returning |
+
+**Red flags that always indicate a leak:**
+- ❌ A `setup()` or `init()` inside a namespace with no matching `teardown()` in the same namespace.
+- ❌ `esp_wifi_init()` called without a `esp_wifi_deinit()` reachable from every exit path.
+- ❌ `BLEDevice::init()` without `BLEDevice::deinit()` — especially in features that can be re-entered.
+- ❌ `malloc()` / `new` inside a loop or re-enterable function without a matching `free()` / `delete` on all exit paths.
+- ❌ A hot-path function (called every loop tick or every status bar update) that calls `SD.begin()`, `WiFi.scanNetworks()`, or any hardware init that is supposed to run once.
+- ❌ FreeRTOS task or semaphore created without handle saved for later deletion.
+
+**Every bug fix that touches a `setup()`/`loop()` pair must also verify the corresponding `teardown()` exists and is called from main.cpp on all exit paths.**
+
 ---
 
 ## 3. DIRECT ACTION SHORTCUTS

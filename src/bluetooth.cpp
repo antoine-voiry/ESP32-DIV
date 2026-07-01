@@ -1547,6 +1547,16 @@ void bleScanLoop() {
     if (fullScreenUpdate) fullScreenUpdate = false;
   }
 }
+
+void teardown() {
+    if (bleScan != nullptr) {
+        bleScan->stop();
+        bleScan->clearResults();
+        bleScan = nullptr;
+    }
+    BLEDevice::deinit(false);
+}
+
 }
 
 

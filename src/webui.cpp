@@ -1,6 +1,7 @@
 #include "webui.h"
 #include "webui_html.h"
 #include "shared.h"
+#include "webui_logic.h"
 #include <ESPAsyncWebServer.h>
 #include <AsyncTCP.h>
 #include <WiFi.h>
@@ -80,23 +81,20 @@ static void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient*,
     memcpy(buf, data, len);
     buf[len] = '\0';                     // safe: buf is MAX_MSG, len < MAX_MSG
 
-    // Extract action without String allocation
-    const char* actionPtr = strstr(buf, "\"action\":\"");
-    if (!actionPtr) return;
-    actionPtr += 10;  // skip past "action":"
-
-    if (strncmp(actionPtr, "launch\"", 7) == 0) {
-        // Extract category and item integers
-        const char* catPtr = strstr(buf, "\"category\":");
-        const char* itmPtr = strstr(buf, "\"item\":");
-        if (catPtr && itmPtr) {
-            pendingCat  = (int8_t)atoi(catPtr + 11);
-            pendingItem = (int8_t)atoi(itmPtr + 7);
-        }
-    } else if (strncmp(actionPtr, "stop\"", 5) == 0) {
-        pendingStop = true;
-    } else if (strncmp(actionPtr, "status\"", 7) == 0) {
-        pendingCat = -2;  // sentinel: status request
+    WsAction action = parseWsAction(buf, len);
+    switch (action.type) {
+        case WS_ACTION_LAUNCH:
+            pendingCat  = action.cat;
+            pendingItem = action.item;
+            break;
+        case WS_ACTION_STOP:
+            pendingStop = true;
+            break;
+        case WS_ACTION_STATUS:
+            pendingCat = -2;  // sentinel: status request
+            break;
+        default:
+            break;
     }
 }
 
