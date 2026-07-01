@@ -479,25 +479,27 @@ void handleWiFiSubmenuButtons() {
                 PacketMonitor::ptmLoop();        
                 if (isButtonPressed(BTN_SELECT)) {
                     in_sub_menu = true;
-                    is_main_menu = false; 
+                    is_main_menu = false;
                     submenu_initialized = false;
                     feature_active = false;
-                    feature_exit_requested = false; 
-                    displaySubmenu();           
-                    delay(200);            
+                    feature_exit_requested = false;
+                    PacketMonitor::teardown();
+                    displaySubmenu();
+                    delay(200);
                     while (isButtonPressed(BTN_SELECT)) {
                         delay(10); yield();
-                    }           
-                    break;  
+                    }
+                    break;
                 }
             }
             if (feature_exit_requested) {
                 in_sub_menu = true;
-                is_main_menu = false; 
+                is_main_menu = false;
                 submenu_initialized = false;
                 feature_active = false;
-                feature_exit_requested = false; 
-                displaySubmenu(); 
+                feature_exit_requested = false;
+                PacketMonitor::teardown();
+                displaySubmenu();
                 delay(200);
             }
         }
@@ -506,7 +508,7 @@ void handleWiFiSubmenuButtons() {
             current_submenu_index = 1;
             in_sub_menu = true;
             feature_active = true;
-            feature_exit_requested = false; 
+            feature_exit_requested = false;
             BeaconSpammer::beaconSpamSetup();   
             while (current_submenu_index == 1 && !feature_exit_requested) {  
                 current_submenu_index = 1;
@@ -717,40 +719,42 @@ void handleWiFiSubmenuButtons() {
                     current_submenu_index = 0;
                     in_sub_menu = true;
                     feature_active = true;
-                    feature_exit_requested = false; 
-                    PacketMonitor::ptmSetup();   
-                    while (current_submenu_index == 0 && !feature_exit_requested) {  
+                    feature_exit_requested = false;
+                    PacketMonitor::ptmSetup();
+                    while (current_submenu_index == 0 && !feature_exit_requested) {
                         current_submenu_index = 0;
                         in_sub_menu = true;
-                        PacketMonitor::ptmLoop();        
+                        PacketMonitor::ptmLoop();
                         if (isButtonPressed(BTN_SELECT)) {
                             in_sub_menu = true;
-                            is_main_menu = false; 
+                            is_main_menu = false;
                             submenu_initialized = false;
                             feature_active = false;
-                            feature_exit_requested = false; 
-                            displaySubmenu();           
-                            delay(200);            
+                            feature_exit_requested = false;
+                            PacketMonitor::teardown();
+                            displaySubmenu();
+                            delay(200);
                             while (isButtonPressed(BTN_SELECT)) {
                                 delay(10); yield();
-                    }           
-                            break;  
+                            }
+                            break;
                         }
                     }
                     if (feature_exit_requested) {
                         in_sub_menu = true;
-                        is_main_menu = false; 
+                        is_main_menu = false;
                         submenu_initialized = false;
                         feature_active = false;
-                        feature_exit_requested = false; 
-                        displaySubmenu(); 
+                        feature_exit_requested = false;
+                        PacketMonitor::teardown();
+                        displaySubmenu();
                         delay(200);
                     }
                 } else if (current_submenu_index == 1) {
                     current_submenu_index = 1;
                     in_sub_menu = true;
                     feature_active = true;
-                    feature_exit_requested = false; 
+                    feature_exit_requested = false;
                     BeaconSpammer::beaconSpamSetup();   
                     while (current_submenu_index == 1 && !feature_exit_requested) {  
                         current_submenu_index = 1;

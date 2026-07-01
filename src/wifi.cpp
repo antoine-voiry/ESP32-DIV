@@ -449,6 +449,13 @@ void ptmLoop() {
   deauths = 0;
   rssiSum = 0;
   }
+
+void teardown() {
+    esp_wifi_set_promiscuous(false);
+    esp_wifi_stop();
+    esp_wifi_deinit();
+    WiFi.mode(WIFI_OFF);
+}
 }
 
 
