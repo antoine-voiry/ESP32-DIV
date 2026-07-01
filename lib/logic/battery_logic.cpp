@@ -26,3 +26,9 @@ int computeTempStatus(float tempC) {
     if (tempC >= 65.0f) return 1;
     return 0;
 }
+
+int computeWifiDisplayStrength(bool isConnected, bool isAp, int rssi) {
+    if (isConnected) return computeWifiStrength(rssi);
+    if (isAp)        return 100;
+    return 0;
+}

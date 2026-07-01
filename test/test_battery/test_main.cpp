@@ -43,6 +43,35 @@ void test_wifi_at_ceil_exact()  { TEST_ASSERT_EQUAL_INT(100, computeWifiStrength
 void test_wifi_low_quarter()  { TEST_ASSERT_EQUAL_INT(25,  computeWifiStrength(-82)); }
 void test_wifi_high_quarter() { TEST_ASSERT_EQUAL_INT(75,  computeWifiStrength(-47)); }
 
+// ── computeWifiDisplayStrength adversarial tests ──────────────────────────────
+
+// Failure mode: connected branch not taken — returns 0 for any connected state
+void test_wifi_display_connected_good_signal() {
+    // computeWifiStrength(-50) = ((-50)-(-100))*100/70 = 5000/70 = 71
+    TEST_ASSERT_EQUAL_INT(71, computeWifiDisplayStrength(true, false, -50));
+}
+
+// Failure mode: RSSI floor not applied — returns positive value at -100 dBm
+void test_wifi_display_connected_floor_signal() {
+    // computeWifiStrength(-100) = 0
+    TEST_ASSERT_EQUAL_INT(0, computeWifiDisplayStrength(true, false, -100));
+}
+
+// Failure mode: AP branch not taken — returns 0 instead of 100 in AP mode
+void test_wifi_display_ap_mode_returns_full() {
+    TEST_ASSERT_EQUAL_INT(100, computeWifiDisplayStrength(false, true, -80));
+}
+
+// Failure mode: default branch does not return 0 (returns garbage or previous stack value)
+void test_wifi_display_neither_returns_zero() {
+    TEST_ASSERT_EQUAL_INT(0, computeWifiDisplayStrength(false, false, -80));
+}
+
+// Failure mode: isAp check runs before isConnected check — returns 100 instead of RSSI value
+void test_wifi_display_connected_wins_over_ap() {
+    TEST_ASSERT_EQUAL_INT(71, computeWifiDisplayStrength(true, true, -50));
+}
+
 int main(int argc, char** argv) {
     UNITY_BEGIN();
     RUN_TEST(test_voltage_zero);
@@ -74,5 +103,10 @@ int main(int argc, char** argv) {
     RUN_TEST(test_wifi_at_ceil_exact);
     RUN_TEST(test_wifi_low_quarter);
     RUN_TEST(test_wifi_high_quarter);
+    RUN_TEST(test_wifi_display_connected_good_signal);
+    RUN_TEST(test_wifi_display_connected_floor_signal);
+    RUN_TEST(test_wifi_display_ap_mode_returns_full);
+    RUN_TEST(test_wifi_display_neither_returns_zero);
+    RUN_TEST(test_wifi_display_connected_wins_over_ap);
     return UNITY_END();
 }

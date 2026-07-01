@@ -184,13 +184,11 @@ void drawStatusBar(float batteryVoltage, bool forceUpdate) {
 
     int batteryPercentage = computeBatteryPercent(batteryVoltage);
 
-    int wifiStrength = 0;
     wifi_mode_t wifiMode = WiFi.getMode();
-    if (WiFi.status() == WL_CONNECTED) {
-        wifiStrength = computeWifiStrength(WiFi.RSSI());
-    } else if (wifiMode == WIFI_AP || wifiMode == WIFI_AP_STA) {
-        wifiStrength = 100;
-    }
+    int wifiStrength = computeWifiDisplayStrength(
+        WiFi.status() == WL_CONNECTED,
+        wifiMode == WIFI_AP || wifiMode == WIFI_AP_STA,
+        WiFi.RSSI());
 
   float internalTemp = readInternalTemperature();
   bool sdAvailable = false;
