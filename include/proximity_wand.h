@@ -70,6 +70,11 @@ static const uint16_t PW_DIM      = 0x4208;  // dark grey — ZONE_NONE bar
 static const uint16_t PW_GREEN    = 0x07E0;  // ZONE_LOW
 static const uint16_t PW_YELLOW   = 0xFFE0;  // ZONE_MODERATE
 static const uint16_t PW_RED      = 0xF800;  // ZONE_CRITICAL
+// Guard against PROX_COLOR_* in proximity_logic.h drifting from PW_* palette.
+static_assert(PW_DIM    == PROX_COLOR_NONE,     "PROX_COLOR_NONE / PW_DIM mismatch");
+static_assert(PW_GREEN  == PROX_COLOR_LOW,      "PROX_COLOR_LOW / PW_GREEN mismatch");
+static_assert(PW_YELLOW == PROX_COLOR_MODERATE, "PROX_COLOR_MODERATE / PW_YELLOW mismatch");
+static_assert(PW_RED    == PROX_COLOR_CRITICAL, "PROX_COLOR_CRITICAL / PW_RED mismatch");
 static const uint16_t PW_THREAT   = 0xF81F;  // magenta — confirmed tracker OUI
 
 // ── Timing ───────────────────────────────────────────────────────────────────
